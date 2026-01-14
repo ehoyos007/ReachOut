@@ -13,19 +13,11 @@ Building notifications system and testing the workflow execution engine.
 
 ## To Do
 
-### High Priority (Setup & Testing)
+### High Priority (Deployment)
 
-- [ ] **Run SQL migration 005**
-  - Description: Execute 005_create_workflow_execution_tables.sql in Supabase
+- [ ] **Deploy to Vercel**
+  - Description: Deploy app and configure CRON_SECRET environment variable
   - Blockers: None
-
-- [ ] **Test workflow execution end-to-end**
-  - Description: Enroll a contact and verify workflow runs correctly
-  - Blockers: Migration 005
-
-- [ ] **Set up Vercel Cron**
-  - Description: Configure cron job to call /api/cron/process-workflows
-  - Blockers: Migration 005
 
 ### Medium Priority (Phase 7: Notifications)
 
@@ -219,6 +211,13 @@ Building notifications system and testing the workflow execution engine.
 - [x] Feature: Stop on reply detection
 - [x] Feature: Retry logic with max attempts
 
+### Workflow Execution Testing & Cron Setup (Completed Jan 14, 2026)
+- [x] Run SQL migration 005 in Supabase
+- [x] Test workflow execution end-to-end (SMS sent successfully via Twilio)
+- [x] Create vercel.json with cron configuration (every minute)
+- [x] Update cron endpoint for Vercel compatibility (x-vercel-cron header)
+- [x] Add CRON_SECRET to environment variable examples
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
@@ -256,17 +255,16 @@ Building notifications system and testing the workflow execution engine.
 
 ## Notes
 
-**Current Priority:** Phase 7 (Notifications), testing, and webhooks.
+**Current Priority:** Deploy to Vercel, Phase 7 (Notifications), and webhooks.
 
 **Dependencies:**
 - Phase 7 (Notifications) requires Phase 5 (Messaging) - DONE
 - Phase 8 (Execution) requires Phases 3, 4, 5, 6 - ALL DONE
 
 **Remaining:**
-- Run SQL migration 005 in Supabase
-- Set up Vercel Cron for workflow processing
+- Deploy to Vercel with CRON_SECRET environment variable
 - Webhook endpoints for inbound messages and status callbacks
-- Test full workflow execution flow end-to-end
+- Phase 7: Notifications system
 
 ---
 

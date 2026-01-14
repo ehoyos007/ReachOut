@@ -8,21 +8,37 @@ const MAX_EXECUTIONS_PER_RUN = 100;
 // Secret for cron authentication (should be set in environment)
 const CRON_SECRET = process.env.CRON_SECRET;
 
+/**
+ * Verify the request is authorized to trigger the cron job
+ * Accepts: Vercel Cron (automatic), Bearer token, or no auth in development
+ */
+function isAuthorized(request: NextRequest): boolean {
+  // Always allow Vercel Cron requests (they include this header)
+  if (request.headers.get("x-vercel-cron") === "1") {
+    return true;
+  }
+
+  // Check Bearer token if CRON_SECRET is configured
+  if (CRON_SECRET) {
+    const authHeader = request.headers.get("authorization");
+    const providedSecret = authHeader?.replace("Bearer ", "");
+    return providedSecret === CRON_SECRET;
+  }
+
+  // In development without CRON_SECRET, allow all requests
+  return process.env.NODE_ENV === "development";
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    // Verify cron secret if configured
-    if (CRON_SECRET) {
-      const authHeader = request.headers.get("authorization");
-      const providedSecret = authHeader?.replace("Bearer ", "");
-
-      if (providedSecret !== CRON_SECRET) {
-        return NextResponse.json(
-          { error: "Unauthorized" },
-          { status: 401 }
-        );
-      }
+    // Verify authorization
+    if (!isAuthorized(request)) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     // Get all due executions
