@@ -63,13 +63,17 @@ describe('Home Page', () => {
       ).toBeInTheDocument();
     });
 
-    it('should display Templates feature as coming soon', () => {
-      expect(screen.getByText('Templates')).toBeInTheDocument();
-      expect(screen.getAllByText(/Coming Soon/i).length).toBeGreaterThan(0);
+    it('should display Templates feature', () => {
+      // Multiple elements have "Templates" text (nav + card heading)
+      expect(screen.getAllByText('Templates').length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getByText(/Create reusable SMS and email message templates/i)
+      ).toBeInTheDocument();
     });
 
     it('should display Settings feature as coming soon', () => {
       expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText(/Coming Soon/i)).toBeInTheDocument();
     });
 
     it('should have clickable links for Workflows and Contacts', () => {
@@ -85,16 +89,21 @@ describe('Home Page', () => {
       expect(contactsLink).toBeInTheDocument();
     });
 
-    it('should not have clickable links for disabled features', () => {
+    it('should have clickable links for Templates', () => {
       const links = screen.getAllByRole('link');
       const templatesLink = links.find(
         (link) => link.getAttribute('href') === '/templates'
       );
+
+      expect(templatesLink).toBeInTheDocument();
+    });
+
+    it('should not have clickable links for Settings (disabled)', () => {
+      const links = screen.getAllByRole('link');
       const settingsLink = links.find(
         (link) => link.getAttribute('href') === '/settings'
       );
 
-      expect(templatesLink).toBeUndefined();
       expect(settingsLink).toBeUndefined();
     });
   });

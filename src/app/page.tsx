@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GitBranch, Users, Mail, Settings } from "lucide-react";
+import { GitBranch, Users, FileText, Settings } from "lucide-react";
 
 export default function Home() {
   const features = [
@@ -17,10 +17,9 @@ export default function Home() {
     },
     {
       href: "/templates",
-      icon: Mail,
+      icon: FileText,
       title: "Templates",
       description: "Create reusable SMS and email message templates",
-      disabled: true,
     },
     {
       href: "/settings",
@@ -50,6 +49,12 @@ export default function Home() {
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Contacts
+              </Link>
+              <Link
+                href="/templates"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Templates
               </Link>
             </nav>
           </div>

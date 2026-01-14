@@ -635,3 +635,90 @@ export async function deleteTag(id: string): Promise<void> {
   const { error } = await getSupabase().from("tags").delete().eq("id", id);
   if (error) throw error;
 }
+
+// =============================================================================
+// Template Operations
+// =============================================================================
+
+import type {
+  Template,
+  TemplateChannel,
+  TemplateFilters,
+  CreateTemplateInput,
+  UpdateTemplateInput,
+} from "@/types/template";
+
+export async function getTemplates(filters?: TemplateFilters): Promise<Template[]> {
+  const client = getSupabase();
+
+  let query = client
+    .from("templates")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  // Apply filters
+  if (filters?.search) {
+    const search = `%${filters.search}%`;
+    query = query.or(
+      `name.ilike.${search},subject.ilike.${search},body.ilike.${search}`
+    );
+  }
+
+  if (filters?.channel) {
+    query = query.eq("channel", filters.channel);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as Template[];
+}
+
+export async function getTemplate(id: string): Promise<Template | null> {
+  const { data, error } = await getSupabase()
+    .from("templates")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as Template;
+}
+
+export async function createTemplate(input: CreateTemplateInput): Promise<Template> {
+  const { data, error } = await getSupabase()
+    .from("templates")
+    .insert({
+      name: input.name,
+      channel: input.channel,
+      subject: input.subject || null,
+      body: input.body,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Template;
+}
+
+export async function updateTemplate(input: UpdateTemplateInput): Promise<Template> {
+  const { id, ...updates } = input;
+
+  const { data, error } = await getSupabase()
+    .from("templates")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Template;
+}
+
+export async function deleteTemplate(id: string): Promise<void> {
+  const { error } = await getSupabase().from("templates").delete().eq("id", id);
+  if (error) throw error;
+}

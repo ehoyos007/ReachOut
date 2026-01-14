@@ -1,8 +1,8 @@
 # TASKS.md
 
 ## Current Sprint/Focus
-**Phase 3: Contact Management**
-Building the contact system foundation that workflows will operate on.
+**Phase 5: Messaging**
+Building the messaging integrations (Twilio, SendGrid) for SMS and Email.
 
 ---
 
@@ -12,28 +12,6 @@ Building the contact system foundation that workflows will operate on.
 ---
 
 ## To Do
-
-### Medium Priority (Phase 4: Message Templates)
-
-- [ ] **Database: Create templates table**
-  - Description: Templates with name, channel, subject, body fields
-  - Blockers: None
-
-- [ ] **Types & Store: Template management**
-  - Description: TypeScript types and Zustand store for templates
-  - Blockers: Templates table
-
-- [ ] **UI: Templates list page**
-  - Description: List with channel filter and search
-  - Blockers: Store
-
-- [ ] **UI: Template editor**
-  - Description: Create/edit form with placeholder insertion
-  - Blockers: Templates list
-
-- [ ] **Feature: Template preview**
-  - Description: Preview with sample contact, validate placeholders
-  - Blockers: Template editor, contacts
 
 ### Medium Priority (Phase 5: Messaging)
 
@@ -222,9 +200,20 @@ Building the contact system foundation that workflows will operate on.
 - [x] Live tag preview in dialog
 - [x] Usage tips for organizing contacts
 
+### Phase 4: Message Templates (Completed Jan 14, 2026)
+- [x] Database: Create templates table migration
+- [x] Types & Store: Template management (TypeScript types, Zustand store)
+- [x] UI: Templates list page with search and channel filter
+- [x] UI: Template editor with create/edit/duplicate
+- [x] Feature: Placeholder insertion ({{first_name}}, {{last_name}}, etc.)
+- [x] Feature: Template preview with sample contact data
+- [x] Feature: SMS segment calculator (GSM vs Unicode detection)
+- [x] Updated home page navigation with Templates link
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
+## Phase 4: Message Templates - COMPLETE
 
 ---
 
@@ -255,7 +244,7 @@ Building the contact system foundation that workflows will operate on.
 
 ## Notes
 
-**Current Priority:** Complete Phase 3 (Contact detail page, CSV import, custom fields UI, tags UI) then Phase 4 (Templates).
+**Current Priority:** Phase 5 (Messaging) - Twilio and SendGrid integrations.
 
 **Dependencies:**
 - Phase 5 (Messaging) requires Phase 6 (Settings) for credentials

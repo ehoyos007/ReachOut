@@ -1,12 +1,17 @@
 import '@testing-library/jest-dom';
 
-// Mock crypto.randomUUID for tests
+// Mock crypto.randomUUID for tests - returns proper UUID v4 format
+const mockUUID = (): `${string}-${string}-${string}-${string}-${string}` => {
+  const hex = () => Math.random().toString(16).substring(2, 6);
+  return `${hex()}${hex()}-${hex()}-4${hex().substring(1)}-${hex()}-${hex()}${hex()}${hex()}`;
+};
+
 if (typeof crypto === 'undefined') {
   global.crypto = {
-    randomUUID: () => 'test-uuid-' + Math.random().toString(36).substr(2, 9),
-  };
+    randomUUID: mockUUID,
+  } as Crypto;
 } else if (!crypto.randomUUID) {
-  crypto.randomUUID = () => 'test-uuid-' + Math.random().toString(36).substr(2, 9);
+  crypto.randomUUID = mockUUID;
 }
 
 // Mock window.matchMedia
