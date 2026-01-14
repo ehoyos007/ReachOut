@@ -4,6 +4,59 @@
 
 ---
 
+## January 14, 2026 — Session 11
+
+### Summary
+Phase 7: Notifications - Complete notifications system for inbound message alerts with UI dropdown and full page view.
+
+### Completed
+- [x] Created database migration for notifications table (`006_create_notifications_table.sql`)
+- [x] Defined TypeScript types for notifications with helper functions
+- [x] Built Zustand store for notification state management
+- [x] Added Supabase CRUD operations for notifications
+- [x] Created API routes for notifications (list, mark read, mark all read, delete)
+- [x] Built NotificationsDropdown component with unread badge and popover
+- [x] Created full notifications page at `/notifications`
+- [x] Updated Twilio inbound webhook to auto-create notifications for new SMS
+- [x] Updated SendGrid inbound webhook to auto-create notifications for new emails
+- [x] Added notifications dropdown to home page header
+- [x] Updated TASKS.md to mark Phase 7 complete
+- [x] Committed and pushed all changes
+- [x] **Phase 7: Notifications is now complete!**
+
+### Files Changed
+- `supabase/migrations/006_create_notifications_table.sql` — New: notifications table with indexes and RLS
+- `src/types/notification.ts` — New: Notification types, helper functions for icons/labels
+- `src/lib/store/notificationStore.ts` — New: Zustand store with notification CRUD and polling
+- `src/lib/supabase.ts` — Extended: Added notification database operations
+- `src/app/api/notifications/route.ts` — New: GET notifications endpoint
+- `src/app/api/notifications/[id]/route.ts` — New: GET/DELETE single notification
+- `src/app/api/notifications/[id]/read/route.ts` — New: POST mark as read
+- `src/app/api/notifications/read-all/route.ts` — New: POST mark all as read
+- `src/components/notifications/NotificationsDropdown.tsx` — New: Bell icon dropdown with unread count
+- `src/components/notifications/index.ts` — New: Component exports
+- `src/app/notifications/page.tsx` — New: Full notifications list page
+- `src/app/page.tsx` — Updated: Added "use client" and NotificationsDropdown to header
+- `src/app/api/webhooks/twilio/inbound/route.ts` — Updated: Create notification on inbound SMS
+- `src/app/api/webhooks/sendgrid/inbound/route.ts` — Updated: Create notification on inbound email
+- `TASKS.md` — Updated: Marked Phase 7 complete, updated notes
+
+### Decisions Made
+- **Polling interval:** 30 seconds for new notification checks (balance between responsiveness and server load)
+- **Notification types:** inbound_sms, inbound_email, workflow_completed, workflow_failed, system
+- **Click behavior:** Clicking notification navigates to contact detail or workflow page
+- **Dropdown limit:** Show 20 most recent notifications in dropdown, full page for all
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Run migration 006 in Supabase to create notifications table
+- [ ] Phase 9: Polish (UI improvements, loading states, dashboard)
+- [ ] Add notifications dropdown to other pages (workflows, contacts, templates, settings)
+
+---
+
 ## January 14, 2026 — Session 10
 
 ### Summary
@@ -620,4 +673,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 9)
+**Last Updated:** January 14, 2026 (Session 11)
