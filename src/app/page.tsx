@@ -1,21 +1,120 @@
 import Link from "next/link";
+import { GitBranch, Users, Mail, Settings } from "lucide-react";
 
 export default function Home() {
+  const features = [
+    {
+      href: "/workflows",
+      icon: GitBranch,
+      title: "Workflows",
+      description: "Create visual automation sequences with drag-and-drop",
+    },
+    {
+      href: "/contacts",
+      icon: Users,
+      title: "Contacts",
+      description: "Manage your contacts and organize them with tags",
+    },
+    {
+      href: "/templates",
+      icon: Mail,
+      title: "Templates",
+      description: "Create reusable SMS and email message templates",
+      disabled: true,
+    },
+    {
+      href: "/settings",
+      icon: Settings,
+      title: "Settings",
+      description: "Configure Twilio, SendGrid, and other integrations",
+      disabled: true,
+    },
+  ];
+
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center p-8">
-      <div className="text-center space-y-6">
-        <h1 className="text-4xl font-bold">ReachOut</h1>
-        <p className="text-muted-foreground max-w-md">
-          Build and run automated SMS and email outreach campaigns with visual
-          drag-and-drop workflows.
-        </p>
-        <div className="flex gap-4 justify-center">
-          <Link
-            href="/workflows"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            View Workflows
-          </Link>
+    <main className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="max-w-6xl mx-auto px-8 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900">ReachOut</h1>
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/workflows"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Workflows
+              </Link>
+              <Link
+                href="/contacts"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Contacts
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <div className="max-w-6xl mx-auto px-8 py-16">
+        <div className="text-center space-y-4 mb-12">
+          <h2 className="text-4xl font-bold text-gray-900">
+            Automated Outreach Made Simple
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Build and run automated SMS and email outreach campaigns with visual
+            drag-and-drop workflows. Personalize at scale.
+          </p>
+        </div>
+
+        {/* Feature Cards */}
+        <div className="grid md:grid-cols-2 gap-6">
+          {features.map((feature) => {
+            const Icon = feature.icon;
+
+            const cardContent = (
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 transition-colors">
+                  <Icon className="w-5 h-5 text-gray-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {feature.title}
+                    {feature.disabled && (
+                      <span className="ml-2 text-xs font-normal text-gray-400">
+                        Coming Soon
+                      </span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            );
+
+            if (feature.disabled) {
+              return (
+                <div
+                  key={feature.title}
+                  className="group block p-6 bg-white rounded-lg border opacity-50 cursor-not-allowed"
+                >
+                  {cardContent}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={feature.title}
+                href={feature.href}
+                className="group block p-6 bg-white rounded-lg border hover:border-gray-300 hover:shadow-md transition-all"
+              >
+                {cardContent}
+              </Link>
+            );
+          })}
         </div>
       </div>
     </main>

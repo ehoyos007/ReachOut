@@ -250,3 +250,388 @@ export async function saveWorkflowNodesAndEdges(
   await saveWorkflowEdges(workflowId, edges);
   await updateWorkflow(workflowId, {});
 }
+
+// =============================================================================
+// Contact Operations
+// =============================================================================
+
+import type {
+  Contact,
+  ContactWithRelations,
+  CustomField,
+  ContactFieldValue,
+  Tag,
+  ContactFilters,
+  ContactPagination,
+  ContactListResponse,
+  CreateContactInput,
+  UpdateContactInput,
+  CreateCustomFieldInput,
+  UpdateCustomFieldInput,
+  CreateTagInput,
+  UpdateTagInput,
+} from "@/types/contact";
+
+export async function getContacts(
+  filters?: ContactFilters,
+  pagination?: Partial<ContactPagination>
+): Promise<ContactListResponse> {
+  const client = getSupabase();
+
+  const page = pagination?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? 25;
+  const sortBy = pagination?.sortBy ?? "created_at";
+  const sortOrder = pagination?.sortOrder ?? "desc";
+
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  // Build query
+  let query = client
+    .from("contacts")
+    .select("*", { count: "exact" });
+
+  // Apply filters
+  if (filters?.search) {
+    const search = `%${filters.search}%`;
+    query = query.or(
+      `first_name.ilike.${search},last_name.ilike.${search},email.ilike.${search},phone.ilike.${search}`
+    );
+  }
+
+  if (filters?.status && filters.status.length > 0) {
+    query = query.in("status", filters.status);
+  }
+
+  if (filters?.do_not_contact !== undefined) {
+    query = query.eq("do_not_contact", filters.do_not_contact);
+  }
+
+  // Apply sorting and pagination
+  query = query
+    .order(sortBy, { ascending: sortOrder === "asc" })
+    .range(from, to);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+
+  // Fetch tags for all contacts in the result
+  const contactIds = (data || []).map((c) => c.id);
+  const contactsWithRelations = await enrichContactsWithRelations(data || [], contactIds);
+
+  // Apply tag filter after fetching (Supabase doesn't easily support filtering by junction table)
+  let filteredContacts = contactsWithRelations;
+  if (filters?.tags && filters.tags.length > 0) {
+    filteredContacts = contactsWithRelations.filter((contact) =>
+      contact.tags.some((tag) => filters.tags!.includes(tag.id))
+    );
+  }
+
+  return {
+    contacts: filteredContacts,
+    total: count || 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count || 0) / pageSize),
+  };
+}
+
+async function enrichContactsWithRelations(
+  contacts: Contact[],
+  contactIds: string[]
+): Promise<ContactWithRelations[]> {
+  if (contactIds.length === 0) {
+    return [];
+  }
+
+  const client = getSupabase();
+
+  // Fetch tags for contacts
+  const { data: contactTags, error: tagsError } = await client
+    .from("contact_tags")
+    .select("contact_id, tag_id, tags(*)")
+    .in("contact_id", contactIds);
+
+  if (tagsError) throw tagsError;
+
+  // Fetch custom field values for contacts
+  const { data: fieldValues, error: fieldsError } = await client
+    .from("contact_field_values")
+    .select("*, contact_custom_fields(name, field_type)")
+    .in("contact_id", contactIds);
+
+  if (fieldsError) throw fieldsError;
+
+  // Group tags and field values by contact
+  const tagsByContact = new Map<string, Tag[]>();
+  const fieldsByContact = new Map<string, ContactFieldValue[]>();
+
+  for (const ct of contactTags || []) {
+    const tags = tagsByContact.get(ct.contact_id) || [];
+    if (ct.tags) {
+      // Supabase returns joined data, need to cast through unknown
+      tags.push(ct.tags as unknown as Tag);
+    }
+    tagsByContact.set(ct.contact_id, tags);
+  }
+
+  for (const fv of fieldValues || []) {
+    const fields = fieldsByContact.get(fv.contact_id) || [];
+    fields.push({
+      ...fv,
+      field_name: fv.contact_custom_fields?.name,
+      field_type: fv.contact_custom_fields?.field_type,
+    });
+    fieldsByContact.set(fv.contact_id, fields);
+  }
+
+  return contacts.map((contact) => ({
+    ...contact,
+    tags: tagsByContact.get(contact.id) || [],
+    custom_fields: fieldsByContact.get(contact.id) || [],
+  }));
+}
+
+export async function getContact(id: string): Promise<ContactWithRelations | null> {
+  const client = getSupabase();
+
+  const { data, error } = await client
+    .from("contacts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+
+  const [enriched] = await enrichContactsWithRelations([data], [id]);
+  return enriched;
+}
+
+export async function createContact(input: CreateContactInput): Promise<ContactWithRelations> {
+  const client = getSupabase();
+
+  // Create the contact
+  const { data: contact, error: contactError } = await client
+    .from("contacts")
+    .insert({
+      first_name: input.first_name || null,
+      last_name: input.last_name || null,
+      email: input.email || null,
+      phone: input.phone || null,
+      status: input.status || "new",
+      do_not_contact: input.do_not_contact || false,
+    })
+    .select()
+    .single();
+
+  if (contactError) throw contactError;
+
+  // Add tags if provided
+  if (input.tags && input.tags.length > 0) {
+    const { error: tagsError } = await client.from("contact_tags").insert(
+      input.tags.map((tagId) => ({
+        contact_id: contact.id,
+        tag_id: tagId,
+      }))
+    );
+    if (tagsError) throw tagsError;
+  }
+
+  // Add custom field values if provided
+  if (input.custom_fields) {
+    const fieldEntries = Object.entries(input.custom_fields);
+    if (fieldEntries.length > 0) {
+      const { error: fieldsError } = await client.from("contact_field_values").insert(
+        fieldEntries.map(([fieldId, value]) => ({
+          contact_id: contact.id,
+          field_id: fieldId,
+          value,
+        }))
+      );
+      if (fieldsError) throw fieldsError;
+    }
+  }
+
+  const result = await getContact(contact.id);
+  if (!result) throw new Error("Failed to fetch created contact");
+  return result;
+}
+
+export async function updateContact(input: UpdateContactInput): Promise<ContactWithRelations> {
+  const client = getSupabase();
+  const { id, tags, custom_fields, ...updates } = input;
+
+  // Update the contact
+  if (Object.keys(updates).length > 0) {
+    const { error: contactError } = await client
+      .from("contacts")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (contactError) throw contactError;
+  }
+
+  // Update tags if provided
+  if (tags !== undefined) {
+    // Remove existing tags
+    const { error: deleteTagsError } = await client
+      .from("contact_tags")
+      .delete()
+      .eq("contact_id", id);
+
+    if (deleteTagsError) throw deleteTagsError;
+
+    // Add new tags
+    if (tags.length > 0) {
+      const { error: insertTagsError } = await client.from("contact_tags").insert(
+        tags.map((tagId) => ({
+          contact_id: id,
+          tag_id: tagId,
+        }))
+      );
+      if (insertTagsError) throw insertTagsError;
+    }
+  }
+
+  // Update custom field values if provided
+  if (custom_fields !== undefined) {
+    // Remove existing field values
+    const { error: deleteFieldsError } = await client
+      .from("contact_field_values")
+      .delete()
+      .eq("contact_id", id);
+
+    if (deleteFieldsError) throw deleteFieldsError;
+
+    // Add new field values
+    const fieldEntries = Object.entries(custom_fields);
+    if (fieldEntries.length > 0) {
+      const { error: insertFieldsError } = await client.from("contact_field_values").insert(
+        fieldEntries.map(([fieldId, value]) => ({
+          contact_id: id,
+          field_id: fieldId,
+          value,
+        }))
+      );
+      if (insertFieldsError) throw insertFieldsError;
+    }
+  }
+
+  const result = await getContact(id);
+  if (!result) throw new Error("Failed to fetch updated contact");
+  return result;
+}
+
+export async function deleteContact(id: string): Promise<void> {
+  const { error } = await getSupabase().from("contacts").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteContacts(ids: string[]): Promise<void> {
+  const { error } = await getSupabase().from("contacts").delete().in("id", ids);
+  if (error) throw error;
+}
+
+// =============================================================================
+// Custom Field Operations
+// =============================================================================
+
+export async function getCustomFields(): Promise<CustomField[]> {
+  const { data, error } = await getSupabase()
+    .from("contact_custom_fields")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createCustomField(input: CreateCustomFieldInput): Promise<CustomField> {
+  const { data, error } = await getSupabase()
+    .from("contact_custom_fields")
+    .insert({
+      name: input.name,
+      field_type: input.field_type,
+      options: input.options || null,
+      is_required: input.is_required || false,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCustomField(input: UpdateCustomFieldInput): Promise<CustomField> {
+  const { id, ...updates } = input;
+
+  const { data, error } = await getSupabase()
+    .from("contact_custom_fields")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCustomField(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("contact_custom_fields")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+// =============================================================================
+// Tag Operations
+// =============================================================================
+
+export async function getTags(): Promise<Tag[]> {
+  const { data, error } = await getSupabase()
+    .from("tags")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function createTag(input: CreateTagInput): Promise<Tag> {
+  const { data, error } = await getSupabase()
+    .from("tags")
+    .insert({
+      name: input.name,
+      color: input.color || "#6366f1",
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTag(input: UpdateTagInput): Promise<Tag> {
+  const { id, ...updates } = input;
+
+  const { data, error } = await getSupabase()
+    .from("tags")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteTag(id: string): Promise<void> {
+  const { error } = await getSupabase().from("tags").delete().eq("id", id);
+  if (error) throw error;
+}
