@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getContactByPhone, createMessage } from "@/lib/supabase";
+import { getContactByPhone, createMessage, createNotification } from "@/lib/supabase";
 import { normalizePhoneNumber } from "@/types/message";
 import crypto from "crypto";
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create inbound message record
-    await createMessage({
+    const message = await createMessage({
       contact_id: contact.id,
       channel: "sms",
       direction: "inbound",
@@ -100,6 +100,25 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`Created inbound SMS message for contact ${contact.id}`);
+
+    // Create notification for the inbound message
+    const contactName = [contact.first_name, contact.last_name]
+      .filter(Boolean)
+      .join(" ") || contact.phone || "Unknown";
+
+    await createNotification({
+      type: "inbound_sms",
+      contact_id: contact.id,
+      message_id: message.id,
+      title: `New SMS from ${contactName}`,
+      body: messageBody.length > 100 ? messageBody.substring(0, 100) + "..." : messageBody,
+      metadata: {
+        from_phone: from,
+        provider_id: messageSid,
+      },
+    });
+
+    console.log(`Created notification for inbound SMS from ${contactName}`);
 
     // Return TwiML response (empty response = no auto-reply)
     return new NextResponse(

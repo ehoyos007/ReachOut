@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getContactByEmail, createMessage } from "@/lib/supabase";
+import { getContactByEmail, createMessage, createNotification } from "@/lib/supabase";
 
 /**
  * Extract email address from "Name <email@example.com>" format
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const body = text || html?.replace(/<[^>]*>/g, "") || "";
 
     // Create inbound message record
-    await createMessage({
+    const message = await createMessage({
       contact_id: contact.id,
       channel: "email",
       direction: "inbound",
@@ -59,6 +59,25 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(`Created inbound email message for contact ${contact.id}`);
+
+    // Create notification for the inbound email
+    const contactName = [contact.first_name, contact.last_name]
+      .filter(Boolean)
+      .join(" ") || contact.email || "Unknown";
+
+    await createNotification({
+      type: "inbound_email",
+      contact_id: contact.id,
+      message_id: message.id,
+      title: `New email from ${contactName}`,
+      body: subject || (body.length > 100 ? body.substring(0, 100) + "..." : body),
+      metadata: {
+        from_email: fromEmail,
+        subject: subject || null,
+      },
+    });
+
+    console.log(`Created notification for inbound email from ${contactName}`);
 
     return new NextResponse("OK", { status: 200 });
   } catch (error) {

@@ -1373,3 +1373,134 @@ export async function hasInboundMessageSince(
 
   return { hasMessage: false };
 }
+
+// =============================================================================
+// Notification Operations
+// =============================================================================
+
+import type {
+  Notification,
+  NotificationWithRelations,
+  CreateNotificationInput,
+  UpdateNotificationInput,
+} from "@/types/notification";
+
+export async function getNotifications(
+  limit: number = 50,
+  includeRead: boolean = true
+): Promise<NotificationWithRelations[]> {
+  const client = getSupabase();
+
+  let query = client
+    .from("notifications")
+    .select(`
+      *,
+      contact:contacts(id, first_name, last_name, email, phone)
+    `)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (!includeRead) {
+    query = query.eq("is_read", false);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as NotificationWithRelations[];
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const { count, error } = await getSupabase()
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("is_read", false);
+
+  if (error) throw error;
+  return count || 0;
+}
+
+export async function getNotification(id: string): Promise<NotificationWithRelations | null> {
+  const { data, error } = await getSupabase()
+    .from("notifications")
+    .select(`
+      *,
+      contact:contacts(id, first_name, last_name, email, phone)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as NotificationWithRelations;
+}
+
+export async function createNotification(
+  input: CreateNotificationInput
+): Promise<Notification> {
+  const { data, error } = await getSupabase()
+    .from("notifications")
+    .insert({
+      type: input.type,
+      contact_id: input.contact_id || null,
+      message_id: input.message_id || null,
+      workflow_id: input.workflow_id || null,
+      title: input.title,
+      body: input.body || null,
+      metadata: input.metadata || {},
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Notification;
+}
+
+export async function markNotificationAsRead(id: string): Promise<Notification> {
+  const { data, error } = await getSupabase()
+    .from("notifications")
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Notification;
+}
+
+export async function markAllNotificationsAsRead(): Promise<void> {
+  const { error } = await getSupabase()
+    .from("notifications")
+    .update({
+      is_read: true,
+      read_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("is_read", false);
+
+  if (error) throw error;
+}
+
+export async function deleteNotification(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("notifications")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function deleteReadNotifications(): Promise<void> {
+  const { error } = await getSupabase()
+    .from("notifications")
+    .delete()
+    .eq("is_read", true);
+
+  if (error) throw error;
+}

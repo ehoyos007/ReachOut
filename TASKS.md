@@ -1,8 +1,8 @@
 # TASKS.md
 
 ## Current Sprint/Focus
-**Phase 7: Notifications & Testing**
-Building notifications system and testing the workflow execution engine.
+**Phase 9: Polish**
+UI improvements, loading states, and final polish.
 
 ---
 
@@ -12,20 +12,6 @@ Building notifications system and testing the workflow execution engine.
 ---
 
 ## To Do
-
-### High Priority (Phase 7: Notifications)
-
-- [ ] **Database: Create notifications table**
-  - Description: Notifications with contact_id, type, read status
-  - Blockers: Messages table
-
-- [ ] **Types & Store: Notification management**
-  - Description: TypeScript types and Zustand store
-  - Blockers: Notifications table
-
-- [ ] **UI: Notifications panel**
-  - Description: Dropdown with unread items, click to navigate
-  - Blockers: Store
 
 ### Backlog (Phase 9: Polish)
 
@@ -203,12 +189,28 @@ Building notifications system and testing the workflow execution engine.
 - [x] Contact lookup by email function
 - [x] Webhook URLs already displayed in Settings page
 
+### Phase 7: Notifications (Completed Jan 14, 2026)
+- [x] Database: Create notifications table migration
+- [x] Types: Notification TypeScript types with helpers
+- [x] Store: Zustand notification store with actions
+- [x] Supabase: CRUD operations for notifications
+- [x] API: GET /api/notifications - list notifications
+- [x] API: POST /api/notifications/[id]/read - mark as read
+- [x] API: POST /api/notifications/read-all - mark all as read
+- [x] API: DELETE /api/notifications/[id] - delete notification
+- [x] UI: NotificationsDropdown component with unread badge
+- [x] UI: Notifications page at /notifications
+- [x] Feature: Auto-create notifications for inbound SMS
+- [x] Feature: Auto-create notifications for inbound emails
+- [x] Integration: Added dropdown to home page header
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
 ## Phase 4: Message Templates - COMPLETE
 ## Phase 5: Messaging - COMPLETE
 ## Phase 6: Settings - COMPLETE
+## Phase 7: Notifications - COMPLETE
 ## Phase 8: Workflow Execution - COMPLETE
 
 ---
@@ -240,20 +242,22 @@ Building notifications system and testing the workflow execution engine.
 
 ## Notes
 
-**Current Priority:** Phase 7 (Notifications) and Polish.
+**Current Priority:** Phase 9 (Polish).
 
 **Dependencies:**
-- Phase 7 (Notifications) requires Phase 5 (Messaging) - DONE
-- Phase 8 (Execution) requires Phases 3, 4, 5, 6 - ALL DONE
-- Webhooks require Phase 5 (Messaging) - DONE
+- All core phases (3-8) are complete
+- Webhooks and notifications are integrated
 
 **Completed:**
 - Deployed to Vercel with CRON_SECRET
 - All webhook endpoints for inbound messages and status callbacks
+- Notifications system with real-time dropdown and full page view
 
 **Remaining:**
-- Phase 7: Notifications system (alerts for inbound messages)
-- Phase 9: Polish (UI improvements, loading states, etc.)
+- Phase 9: Polish (UI improvements, loading states, dashboard, etc.)
+
+**User Action Required:**
+- Run migration 006 in Supabase to create notifications table
 
 ---
 

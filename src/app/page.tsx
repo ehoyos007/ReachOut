@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { GitBranch, Users, FileText, Settings, LucideIcon } from "lucide-react";
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 
 interface Feature {
   href: string;
@@ -69,6 +72,7 @@ export default function Home() {
               >
                 Settings
               </Link>
+              <NotificationsDropdown />
             </nav>
           </div>
         </div>
