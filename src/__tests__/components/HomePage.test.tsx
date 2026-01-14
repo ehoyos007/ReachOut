@@ -71,9 +71,12 @@ describe('Home Page', () => {
       ).toBeInTheDocument();
     });
 
-    it('should display Settings feature as coming soon', () => {
-      expect(screen.getByText('Settings')).toBeInTheDocument();
-      expect(screen.getByText(/Coming Soon/i)).toBeInTheDocument();
+    it('should display Settings feature', () => {
+      // Multiple elements have "Settings" text (nav + card heading)
+      expect(screen.getAllByText('Settings').length).toBeGreaterThanOrEqual(1);
+      expect(
+        screen.getByText(/Configure Twilio, SendGrid, and other integrations/i)
+      ).toBeInTheDocument();
     });
 
     it('should have clickable links for Workflows and Contacts', () => {
@@ -98,13 +101,13 @@ describe('Home Page', () => {
       expect(templatesLink).toBeInTheDocument();
     });
 
-    it('should not have clickable links for Settings (disabled)', () => {
+    it('should have clickable links for Settings', () => {
       const links = screen.getAllByRole('link');
       const settingsLink = links.find(
         (link) => link.getAttribute('href') === '/settings'
       );
 
-      expect(settingsLink).toBeUndefined();
+      expect(settingsLink).toBeInTheDocument();
     });
   });
 });

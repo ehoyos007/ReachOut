@@ -1,8 +1,8 @@
 # TASKS.md
 
 ## Current Sprint/Focus
-**Phase 7: Notifications & Phase 8: Workflow Execution**
-Building notifications system and the workflow execution engine.
+**Phase 7: Notifications & Testing**
+Building notifications system and testing the workflow execution engine.
 
 ---
 
@@ -12,6 +12,20 @@ Building notifications system and the workflow execution engine.
 ---
 
 ## To Do
+
+### High Priority (Setup & Testing)
+
+- [ ] **Run SQL migration 005**
+  - Description: Execute 005_create_workflow_execution_tables.sql in Supabase
+  - Blockers: None
+
+- [ ] **Test workflow execution end-to-end**
+  - Description: Enroll a contact and verify workflow runs correctly
+  - Blockers: Migration 005
+
+- [ ] **Set up Vercel Cron**
+  - Description: Configure cron job to call /api/cron/process-workflows
+  - Blockers: Migration 005
 
 ### Medium Priority (Phase 7: Notifications)
 
@@ -27,27 +41,23 @@ Building notifications system and the workflow execution engine.
   - Description: Dropdown with unread items, click to navigate
   - Blockers: Store
 
-### Lower Priority (Phase 8: Workflow Execution)
+### Lower Priority (Webhooks)
 
-- [ ] **Database: Create enrollment tables**
-  - Description: `workflow_enrollments` and `workflow_executions`
-  - Blockers: Workflows + Contacts
+- [ ] **Webhook: Twilio inbound SMS**
+  - Description: Endpoint for receiving incoming SMS messages
+  - Blockers: None
 
-- [ ] **Feature: Contact enrollment**
-  - Description: Enroll single/bulk contacts in workflow
-  - Blockers: Enrollment tables
+- [ ] **Webhook: SendGrid inbound email**
+  - Description: Endpoint for receiving incoming emails via Inbound Parse
+  - Blockers: None
 
-- [ ] **Engine: Workflow executor**
-  - Description: Process each node type, handle scheduling
-  - Blockers: All messaging integrations
+- [ ] **Webhook: Twilio status callbacks**
+  - Description: Update message status from delivery callbacks
+  - Blockers: None
 
-- [ ] **Engine: Scheduled job runner**
-  - Description: Process due workflow steps on interval
-  - Blockers: Executor
-
-- [ ] **Feature: Stop on reply**
-  - Description: Exit workflow when contact replies
-  - Blockers: Inbound message handling
+- [ ] **Webhook: SendGrid event webhooks**
+  - Description: Update message status from delivery events
+  - Blockers: None
 
 ### Backlog (Phase 9: Polish)
 
@@ -192,12 +202,30 @@ Building notifications system and the workflow execution engine.
 - [x] Feature: Webhook URLs display section
 - [x] Updated home page navigation with Settings link
 
+### Phase 8: Workflow Execution Engine (Completed Jan 14, 2026)
+- [x] Database: Create workflow_enrollments table
+- [x] Database: Create workflow_executions table
+- [x] Database: Create workflow_execution_logs table
+- [x] Types: Enrollment, execution, and node processor interfaces
+- [x] Store: Zustand store for enrollment management
+- [x] Engine: Node processors for all 7 workflow node types
+- [x] Engine: Workflow executor service with execution loop
+- [x] API: POST /api/workflows/[id]/enroll for enrolling contacts
+- [x] API: GET /api/workflows/[id]/enroll for enrollment counts
+- [x] API: POST /api/cron/process-workflows for scheduled execution
+- [x] UI: EnrollContactsDialog component in workflow editor
+- [x] UI: ContactEnrollments component on contact detail page
+- [x] Feature: Template placeholder substitution in messages
+- [x] Feature: Stop on reply detection
+- [x] Feature: Retry logic with max attempts
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
 ## Phase 4: Message Templates - COMPLETE
 ## Phase 5: Messaging - COMPLETE
 ## Phase 6: Settings - COMPLETE
+## Phase 8: Workflow Execution - COMPLETE
 
 ---
 
@@ -228,15 +256,17 @@ Building notifications system and the workflow execution engine.
 
 ## Notes
 
-**Current Priority:** Phase 7 (Notifications) and Phase 8 (Workflow Execution).
+**Current Priority:** Phase 7 (Notifications), testing, and webhooks.
 
 **Dependencies:**
 - Phase 7 (Notifications) requires Phase 5 (Messaging) - DONE
 - Phase 8 (Execution) requires Phases 3, 4, 5, 6 - ALL DONE
 
 **Remaining:**
+- Run SQL migration 005 in Supabase
+- Set up Vercel Cron for workflow processing
 - Webhook endpoints for inbound messages and status callbacks
-- Test full messaging flow with real Twilio/SendGrid credentials
+- Test full workflow execution flow end-to-end
 
 ---
 

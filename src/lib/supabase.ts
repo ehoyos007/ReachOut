@@ -961,3 +961,367 @@ export async function updateSettings(updates: UpdateSettingsInput[]): Promise<vo
     if (error) throw error;
   }
 }
+
+// =============================================================================
+// Workflow Enrollment Operations
+// =============================================================================
+
+import type {
+  WorkflowEnrollment,
+  WorkflowEnrollmentWithRelations,
+  WorkflowExecution,
+  WorkflowExecutionLog,
+  EnrollmentStatus,
+  ExecutionStatus,
+  EnrollmentFilters,
+  ExecutionFilters,
+  ExecutionData,
+} from "@/types/execution";
+
+export async function getEnrollments(
+  filters?: EnrollmentFilters
+): Promise<WorkflowEnrollmentWithRelations[]> {
+  const client = getSupabase();
+
+  let query = client
+    .from("workflow_enrollments")
+    .select(`
+      *,
+      workflow:workflows(id, name, is_enabled),
+      contact:contacts(*)
+    `)
+    .order("enrolled_at", { ascending: false });
+
+  // Apply filters
+  if (filters?.workflow_id) {
+    query = query.eq("workflow_id", filters.workflow_id);
+  }
+
+  if (filters?.contact_id) {
+    query = query.eq("contact_id", filters.contact_id);
+  }
+
+  if (filters?.status && filters.status.length > 0) {
+    query = query.in("status", filters.status);
+  }
+
+  if (filters?.enrolled_after) {
+    query = query.gte("enrolled_at", filters.enrolled_after);
+  }
+
+  if (filters?.enrolled_before) {
+    query = query.lte("enrolled_at", filters.enrolled_before);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as WorkflowEnrollmentWithRelations[];
+}
+
+export async function getEnrollment(id: string): Promise<WorkflowEnrollmentWithRelations | null> {
+  const { data, error } = await getSupabase()
+    .from("workflow_enrollments")
+    .select(`
+      *,
+      workflow:workflows(id, name, is_enabled),
+      contact:contacts(*)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as WorkflowEnrollmentWithRelations;
+}
+
+export async function getEnrollmentByWorkflowAndContact(
+  workflowId: string,
+  contactId: string
+): Promise<WorkflowEnrollment | null> {
+  const { data, error } = await getSupabase()
+    .from("workflow_enrollments")
+    .select("*")
+    .eq("workflow_id", workflowId)
+    .eq("contact_id", contactId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as WorkflowEnrollment;
+}
+
+export async function createEnrollment(
+  workflowId: string,
+  contactId: string
+): Promise<WorkflowEnrollment> {
+  const { data, error } = await getSupabase()
+    .from("workflow_enrollments")
+    .insert({
+      workflow_id: workflowId,
+      contact_id: contactId,
+      status: "active" as EnrollmentStatus,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as WorkflowEnrollment;
+}
+
+export async function updateEnrollment(
+  id: string,
+  updates: Partial<Pick<WorkflowEnrollment, "status" | "completed_at" | "stopped_at" | "stop_reason">>
+): Promise<WorkflowEnrollment> {
+  const { data, error } = await getSupabase()
+    .from("workflow_enrollments")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as WorkflowEnrollment;
+}
+
+export async function deleteEnrollment(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("workflow_enrollments")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function getEnrollmentCount(
+  workflowId: string,
+  status?: EnrollmentStatus[]
+): Promise<number> {
+  const client = getSupabase();
+
+  let query = client
+    .from("workflow_enrollments")
+    .select("*", { count: "exact", head: true })
+    .eq("workflow_id", workflowId);
+
+  if (status && status.length > 0) {
+    query = query.in("status", status);
+  }
+
+  const { count, error } = await query;
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// =============================================================================
+// Workflow Execution Operations
+// =============================================================================
+
+export async function getExecution(id: string): Promise<WorkflowExecution | null> {
+  const { data, error } = await getSupabase()
+    .from("workflow_executions")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as WorkflowExecution;
+}
+
+export async function getExecutionByEnrollment(
+  enrollmentId: string
+): Promise<WorkflowExecution | null> {
+  const { data, error } = await getSupabase()
+    .from("workflow_executions")
+    .select("*")
+    .eq("enrollment_id", enrollmentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as WorkflowExecution;
+}
+
+export async function createExecution(
+  enrollmentId: string,
+  currentNodeId: string,
+  nextRunAt?: Date
+): Promise<WorkflowExecution> {
+  const { data, error } = await getSupabase()
+    .from("workflow_executions")
+    .insert({
+      enrollment_id: enrollmentId,
+      current_node_id: currentNodeId,
+      status: "waiting" as ExecutionStatus,
+      next_run_at: nextRunAt?.toISOString() || new Date().toISOString(),
+      execution_data: {},
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as WorkflowExecution;
+}
+
+interface ExecutionUpdateInput {
+  current_node_id?: string;
+  status?: ExecutionStatus;
+  next_run_at?: string | Date | null;
+  last_run_at?: string | Date | null;
+  attempts?: number;
+  error_message?: string | null;
+  execution_data?: ExecutionData;
+}
+
+export async function updateExecution(
+  id: string,
+  updates: ExecutionUpdateInput
+): Promise<WorkflowExecution> {
+  const updateData: Record<string, unknown> = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Handle Date objects
+  if (updates.next_run_at instanceof Date) {
+    updateData.next_run_at = updates.next_run_at.toISOString();
+  }
+  if (updates.last_run_at instanceof Date) {
+    updateData.last_run_at = updates.last_run_at.toISOString();
+  }
+
+  const { data, error } = await getSupabase()
+    .from("workflow_executions")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as WorkflowExecution;
+}
+
+export async function getDueExecutions(limit: number = 100): Promise<WorkflowExecution[]> {
+  const { data, error } = await getSupabase()
+    .from("workflow_executions")
+    .select("*")
+    .eq("status", "waiting")
+    .lte("next_run_at", new Date().toISOString())
+    .order("next_run_at", { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as WorkflowExecution[];
+}
+
+export async function getExecutionWithDetails(id: string): Promise<{
+  execution: WorkflowExecution;
+  enrollment: WorkflowEnrollment;
+  contact: ContactWithRelations;
+} | null> {
+  const client = getSupabase();
+
+  // Get the execution
+  const execution = await getExecution(id);
+  if (!execution) return null;
+
+  // Get the enrollment
+  const { data: enrollment, error: enrollmentError } = await client
+    .from("workflow_enrollments")
+    .select("*")
+    .eq("id", execution.enrollment_id)
+    .single();
+
+  if (enrollmentError) {
+    if (enrollmentError.code === "PGRST116") return null;
+    throw enrollmentError;
+  }
+
+  // Get the contact with relations
+  const contact = await getContact(enrollment.contact_id);
+  if (!contact) return null;
+
+  return {
+    execution,
+    enrollment: enrollment as WorkflowEnrollment,
+    contact,
+  };
+}
+
+// =============================================================================
+// Workflow Execution Log Operations
+// =============================================================================
+
+export async function createExecutionLog(
+  log: Omit<WorkflowExecutionLog, "id" | "created_at">
+): Promise<WorkflowExecutionLog> {
+  const { data, error } = await getSupabase()
+    .from("workflow_execution_logs")
+    .insert(log)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as WorkflowExecutionLog;
+}
+
+export async function getExecutionLogs(
+  enrollmentId: string,
+  limit: number = 100
+): Promise<WorkflowExecutionLog[]> {
+  const { data, error } = await getSupabase()
+    .from("workflow_execution_logs")
+    .select("*")
+    .eq("enrollment_id", enrollmentId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as WorkflowExecutionLog[];
+}
+
+// =============================================================================
+// Helper function to check for inbound messages (for stop on reply)
+// =============================================================================
+
+export async function hasInboundMessageSince(
+  contactId: string,
+  since: string,
+  channel?: "sms" | "email"
+): Promise<{ hasMessage: boolean; channel?: "sms" | "email" }> {
+  const client = getSupabase();
+
+  let query = client
+    .from("messages")
+    .select("channel")
+    .eq("contact_id", contactId)
+    .eq("direction", "inbound")
+    .gte("created_at", since)
+    .limit(1);
+
+  if (channel) {
+    query = query.eq("channel", channel);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  if (data && data.length > 0) {
+    return { hasMessage: true, channel: data[0].channel as "sms" | "email" };
+  }
+
+  return { hasMessage: false };
+}

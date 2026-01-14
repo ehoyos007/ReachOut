@@ -4,6 +4,71 @@
 
 ---
 
+## January 14, 2026 — Session 9
+
+### Summary
+Phase 8: Workflow Execution Engine - Complete workflow execution system with enrollment, scheduling, and node processors.
+
+### Completed
+- [x] Created database migration for workflow_enrollments, workflow_executions, and workflow_execution_logs tables
+- [x] Defined TypeScript types for enrollments, executions, logs, and node processors
+- [x] Built Zustand store for enrollment management with counts and status tracking
+- [x] Extended Supabase client with 15+ new enrollment/execution operations
+- [x] Implemented node processors for all 7 workflow node types:
+  - trigger_start: Entry point initialization
+  - time_delay: Schedule delayed execution
+  - conditional_split: Evaluate conditions and branch
+  - send_sms: Send SMS via Twilio with template substitution
+  - send_email: Send email via SendGrid with template substitution
+  - update_status: Update contact status
+  - stop_on_reply: Check for inbound messages and stop workflow
+- [x] Created workflow executor service with execution loop and retry logic
+- [x] Created POST /api/workflows/[id]/enroll endpoint for enrolling contacts
+- [x] Created GET /api/workflows/[id]/enroll endpoint for enrollment counts
+- [x] Created POST /api/cron/process-workflows endpoint for scheduled execution
+- [x] Built EnrollContactsDialog component with contact search and multi-select
+- [x] Added "Enroll Contacts" button to WorkflowCanvas toolbar
+- [x] Created ContactEnrollments component showing workflow status per contact
+- [x] Added ContactEnrollments card to contact detail page sidebar
+- [x] Created Tooltip UI component for enhanced UX
+- [x] **Phase 8: Workflow Execution Engine is now complete!**
+
+### Files Changed
+- `supabase/migrations/005_create_workflow_execution_tables.sql` — New: enrollments, executions, logs tables with indexes
+- `src/types/execution.ts` — New: enrollment types, execution types, node processor interfaces
+- `src/lib/store/enrollmentStore.ts` — New: Zustand store for enrollment CRUD and status
+- `src/lib/supabase.ts` — Extended: Added enrollment/execution database operations
+- `src/lib/workflow-executor/index.ts` — New: Module exports
+- `src/lib/workflow-executor/executor.ts` — New: Main execution loop and enrollment functions
+- `src/lib/workflow-executor/node-processors.ts` — New: Processors for all 7 node types
+- `src/app/api/workflows/[id]/enroll/route.ts` — New: Enrollment API endpoint
+- `src/app/api/cron/process-workflows/route.ts` — New: Cron endpoint for scheduled execution
+- `src/components/workflow/EnrollContactsDialog.tsx` — New: Contact enrollment dialog
+- `src/components/workflow/WorkflowCanvas.tsx` — Updated: Added Enroll Contacts button
+- `src/components/contacts/ContactEnrollments.tsx` — New: Enrollment status display
+- `src/app/contacts/[id]/page.tsx` — Updated: Added ContactEnrollments card
+- `src/components/ui/tooltip.tsx` — New: shadcn tooltip component
+
+### Decisions Made
+- **Polling-based scheduler:** Used cron endpoint instead of per-execution functions for simplicity
+- **Node processor pattern:** Each node type has its own processor function returning next node and timing
+- **Retry logic:** Executions retry up to 3 times before marking as failed
+- **Safety limit:** Maximum 100 nodes per execution to prevent infinite loops
+- **Skip duplicates:** Enrollment API skips contacts already enrolled in the workflow
+
+### Blockers / Issues Encountered
+- **Type mismatch:** Fixed instanceof Date check by creating ExecutionUpdateInput interface
+- **Unescaped entities:** Fixed quotes in EnrollContactsDialog using HTML entities
+
+### Next Steps
+- [ ] Run SQL migration 005_create_workflow_execution_tables.sql in Supabase
+- [ ] Test workflow execution flow end-to-end
+- [ ] Set up Vercel Cron to call /api/cron/process-workflows periodically
+- [ ] Phase 7: Notifications (inbound message alerts)
+- [ ] Create webhook endpoints for Twilio/SendGrid status callbacks
+
+---
+
 ## January 14, 2026 — Session 8
 
 ### Summary
@@ -507,4 +572,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 8)
+**Last Updated:** January 14, 2026 (Session 9)

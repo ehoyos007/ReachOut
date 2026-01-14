@@ -54,6 +54,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { MessageThread } from "@/components/contacts/MessageThread";
+import { ContactEnrollments } from "@/components/contacts/ContactEnrollments";
 import { useContactStore } from "@/lib/store/contactStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -683,6 +684,9 @@ export default function ContactDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Workflow Enrollments */}
+            <ContactEnrollments contactId={contactId} />
 
             {/* Quick Actions */}
             <Card>

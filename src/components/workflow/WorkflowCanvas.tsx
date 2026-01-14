@@ -16,6 +16,7 @@ import "@xyflow/react/dist/style.css";
 import { useWorkflowStore } from "@/lib/store/workflowStore";
 import { NodePalette } from "./NodePalette";
 import { NodeConfigPanel } from "./panels/NodeConfigPanel";
+import { EnrollContactsDialog } from "./EnrollContactsDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,7 +29,7 @@ import {
   StopOnReplyNode,
 } from "./nodes";
 import type { WorkflowNodeType } from "@/types/workflow";
-import { Save, Power, Loader2, ArrowLeft } from "lucide-react";
+import { Save, Power, Loader2, ArrowLeft, Users } from "lucide-react";
 import Link from "next/link";
 
 const nodeTypes = {
@@ -148,6 +149,23 @@ function WorkflowCanvasInner() {
               <Power className="w-4 h-4 mr-2" />
               {workflow?.is_enabled ? "Disable" : "Enable"}
             </Button>
+            {workflow && (
+              <EnrollContactsDialog
+                workflowId={workflow.id}
+                workflowName={workflow.name}
+                isEnabled={workflow.is_enabled}
+                trigger={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!workflow.is_enabled}
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Enroll Contacts
+                  </Button>
+                }
+              />
+            )}
             <Button
               size="sm"
               onClick={handleSave}
