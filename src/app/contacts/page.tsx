@@ -17,6 +17,9 @@ import {
   Phone,
   Edit,
   Ban,
+  Upload,
+  Settings2,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -273,10 +276,34 @@ export default function ContactsPage() {
               Manage your contacts and organize them with tags
             </p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Add Contact
-          </Button>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push("/contacts/fields")}>
+                  <Settings2 className="w-4 h-4 mr-2" />
+                  Custom Fields
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/contacts/tags")}>
+                  <Tag className="w-4 h-4 mr-2" />
+                  Manage Tags
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" onClick={() => router.push("/contacts/import")}>
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Contact
+            </Button>
+          </div>
         </div>
 
         {/* Error Alert */}

@@ -13,28 +13,6 @@ Building the contact system foundation that workflows will operate on.
 
 ## To Do
 
-### High Priority (Phase 3: Contact Management - Remaining)
-
-- [ ] **UI: Contact detail page**
-  - Description: View/edit contact with custom fields, tags, status
-  - Branch: `feature/contacts-ui`
-  - Blockers: None
-
-- [ ] **Feature: CSV import**
-  - Description: Upload, parse, column mapping, validation, import
-  - Branch: `feature/csv-import`
-  - Blockers: None
-
-- [ ] **UI: Custom fields management**
-  - Description: CRUD for custom field definitions
-  - Branch: `feature/custom-fields`
-  - Blockers: None
-
-- [ ] **UI: Tags management**
-  - Description: CRUD for tags with color picker
-  - Branch: `feature/tags`
-  - Blockers: None
-
 ### Medium Priority (Phase 4: Message Templates)
 
 - [ ] **Database: Create templates table**
@@ -203,6 +181,50 @@ Building the contact system foundation that workflows will operate on.
 - [x] Write tests for Home page component (10 tests)
 - [x] Set up GitHub Actions CI workflow (lint, test, build, typecheck)
 - [x] Total: 130 tests passing
+
+### Contact Detail Page (Completed Jan 14, 2026)
+- [x] UI: Contact detail page with view/edit modes
+- [x] Contact info section (name, email, phone, status)
+- [x] Tags management (view, add, remove)
+- [x] Custom fields display and editing
+- [x] Do not contact toggle
+- [x] Delete contact functionality
+- [x] Message history placeholder (for Phase 5)
+
+### CSV Import (Completed Jan 14, 2026)
+- [x] Install papaparse for CSV parsing
+- [x] CSV file upload with drag-and-drop
+- [x] Automatic column detection and header parsing
+- [x] Smart auto-mapping of common column names
+- [x] Manual column-to-field mapping UI
+- [x] Import preview with validation
+- [x] Bulk import with progress indicator
+- [x] Import results summary with error details
+- [x] Import button added to contacts list page
+
+### Custom Fields Management (Completed Jan 14, 2026)
+- [x] Custom fields management page at `/contacts/fields`
+- [x] List all custom fields with type icons
+- [x] Create new field dialog (name, type, options, required)
+- [x] Edit existing field dialog
+- [x] Delete field with confirmation
+- [x] Select field options management (add/remove)
+- [x] Field type guide with descriptions
+- [x] Settings dropdown in contacts header
+
+### Tags Management (Completed Jan 14, 2026)
+- [x] Tags management page at `/contacts/tags`
+- [x] Tag list with color indicators
+- [x] Create tag dialog with color picker
+- [x] Edit tag dialog
+- [x] Delete tag with confirmation
+- [x] 14-color palette for tag colors
+- [x] Live tag preview in dialog
+- [x] Usage tips for organizing contacts
+
+---
+
+## Phase 3: Contact Management - COMPLETE
 
 ---
 
