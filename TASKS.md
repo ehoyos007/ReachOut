@@ -13,13 +13,7 @@ Building notifications system and testing the workflow execution engine.
 
 ## To Do
 
-### High Priority (Deployment)
-
-- [ ] **Deploy to Vercel**
-  - Description: Deploy app and configure CRON_SECRET environment variable
-  - Blockers: None
-
-### Medium Priority (Phase 7: Notifications)
+### High Priority (Phase 7: Notifications)
 
 - [ ] **Database: Create notifications table**
   - Description: Notifications with contact_id, type, read status
@@ -32,24 +26,6 @@ Building notifications system and testing the workflow execution engine.
 - [ ] **UI: Notifications panel**
   - Description: Dropdown with unread items, click to navigate
   - Blockers: Store
-
-### Lower Priority (Webhooks)
-
-- [ ] **Webhook: Twilio inbound SMS**
-  - Description: Endpoint for receiving incoming SMS messages
-  - Blockers: None
-
-- [ ] **Webhook: SendGrid inbound email**
-  - Description: Endpoint for receiving incoming emails via Inbound Parse
-  - Blockers: None
-
-- [ ] **Webhook: Twilio status callbacks**
-  - Description: Update message status from delivery callbacks
-  - Blockers: None
-
-- [ ] **Webhook: SendGrid event webhooks**
-  - Description: Update message status from delivery events
-  - Blockers: None
 
 ### Backlog (Phase 9: Polish)
 
@@ -218,6 +194,15 @@ Building notifications system and testing the workflow execution engine.
 - [x] Update cron endpoint for Vercel compatibility (x-vercel-cron header)
 - [x] Add CRON_SECRET to environment variable examples
 
+### Webhooks (Completed Jan 14, 2026)
+- [x] Twilio inbound SMS webhook (`/api/webhooks/twilio/inbound`)
+- [x] Twilio status callback webhook (`/api/webhooks/twilio/status`)
+- [x] SendGrid inbound email webhook (`/api/webhooks/sendgrid/inbound`)
+- [x] SendGrid event webhook (`/api/webhooks/sendgrid/events`)
+- [x] Contact lookup by phone number function
+- [x] Contact lookup by email function
+- [x] Webhook URLs already displayed in Settings page
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
@@ -255,16 +240,20 @@ Building notifications system and testing the workflow execution engine.
 
 ## Notes
 
-**Current Priority:** Deploy to Vercel, Phase 7 (Notifications), and webhooks.
+**Current Priority:** Phase 7 (Notifications) and Polish.
 
 **Dependencies:**
 - Phase 7 (Notifications) requires Phase 5 (Messaging) - DONE
 - Phase 8 (Execution) requires Phases 3, 4, 5, 6 - ALL DONE
+- Webhooks require Phase 5 (Messaging) - DONE
+
+**Completed:**
+- Deployed to Vercel with CRON_SECRET
+- All webhook endpoints for inbound messages and status callbacks
 
 **Remaining:**
-- Deploy to Vercel with CRON_SECRET environment variable
-- Webhook endpoints for inbound messages and status callbacks
-- Phase 7: Notifications system
+- Phase 7: Notifications system (alerts for inbound messages)
+- Phase 9: Polish (UI improvements, loading states, etc.)
 
 ---
 

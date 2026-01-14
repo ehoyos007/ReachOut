@@ -4,6 +4,54 @@
 
 ---
 
+## January 14, 2026 — Session 10
+
+### Summary
+End-to-end workflow testing, Vercel Cron setup, and webhook endpoints for Twilio/SendGrid.
+
+### Completed
+- [x] Tested workflow execution end-to-end (SMS sent successfully via Twilio)
+- [x] Fixed template ID reference in workflow node (was "1", updated to actual UUID)
+- [x] Created `vercel.json` with cron configuration (runs every minute)
+- [x] Updated cron endpoint for Vercel compatibility (`x-vercel-cron` header verification)
+- [x] Added `CRON_SECRET` to environment variable examples
+- [x] User deployed to Vercel and configured CRON_SECRET
+- [x] Created Twilio inbound SMS webhook (`/api/webhooks/twilio/inbound`)
+- [x] Created Twilio status callback webhook (`/api/webhooks/twilio/status`)
+- [x] Created SendGrid inbound email webhook (`/api/webhooks/sendgrid/inbound`)
+- [x] Created SendGrid event webhook (`/api/webhooks/sendgrid/events`)
+- [x] Added `getContactByPhone()` function with multi-format phone lookup
+- [x] Added `getContactByEmail()` function for email lookup
+- [x] Webhook signature verification for Twilio (SHA1 HMAC) and SendGrid (ECDSA)
+
+### Files Changed
+- `vercel.json` — New: Cron configuration for workflow processing
+- `src/app/api/cron/process-workflows/route.ts` — Updated: Added Vercel cron header verification
+- `src/app/api/webhooks/twilio/inbound/route.ts` — New: Receive incoming SMS
+- `src/app/api/webhooks/twilio/status/route.ts` — New: Receive SMS delivery status
+- `src/app/api/webhooks/sendgrid/inbound/route.ts` — New: Receive incoming emails
+- `src/app/api/webhooks/sendgrid/events/route.ts` — New: Receive email delivery events
+- `src/lib/supabase.ts` — Extended: Added getContactByPhone, getContactByEmail
+- `.env.example` — Updated: Added CRON_SECRET
+- `.env.local.example` — Updated: Added CRON_SECRET
+- `TASKS.md` — Updated: Marked webhooks and cron setup complete
+
+### Decisions Made
+- **Vercel Cron:** Runs every minute for responsive workflow execution (Pro plan)
+- **Phone lookup:** Support multiple formats (with/without country code, various separators)
+- **Signature verification:** Skip in development, enforce in production
+- **TwiML response:** Return empty response (no auto-reply) for inbound SMS
+
+### Blockers / Issues Encountered
+- **Template ID mismatch:** Workflow node had templateId "1" instead of actual UUID; fixed via SQL update
+
+### Next Steps
+- [ ] Phase 7: Notifications (alerts for inbound messages)
+- [ ] Phase 9: Polish (UI improvements, loading states, dashboard)
+- [ ] Configure webhook URLs in Twilio Console and SendGrid Dashboard
+
+---
+
 ## January 14, 2026 — Session 9
 
 ### Summary

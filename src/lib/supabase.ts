@@ -411,6 +411,54 @@ export async function getContact(id: string): Promise<ContactWithRelations | nul
   return enriched;
 }
 
+export async function getContactByPhone(phone: string): Promise<ContactWithRelations | null> {
+  const client = getSupabase();
+
+  // Normalize phone number for lookup (try multiple formats)
+  const normalizedPhone = phone.replace(/\D/g, "");
+  const phoneVariants = [
+    phone,
+    normalizedPhone,
+    `+${normalizedPhone}`,
+    `+1${normalizedPhone}`,
+    normalizedPhone.slice(-10), // Last 10 digits
+  ];
+
+  const { data, error } = await client
+    .from("contacts")
+    .select("*")
+    .or(phoneVariants.map(p => `phone.ilike.%${p.slice(-10)}`).join(","))
+    .limit(1)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+
+  const [enriched] = await enrichContactsWithRelations([data], [data.id]);
+  return enriched;
+}
+
+export async function getContactByEmail(email: string): Promise<ContactWithRelations | null> {
+  const client = getSupabase();
+
+  const { data, error } = await client
+    .from("contacts")
+    .select("*")
+    .ilike("email", email)
+    .limit(1)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+
+  const [enriched] = await enrichContactsWithRelations([data], [data.id]);
+  return enriched;
+}
+
 export async function createContact(input: CreateContactInput): Promise<ContactWithRelations> {
   const client = getSupabase();
 
