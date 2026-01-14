@@ -1,8 +1,16 @@
 import Link from "next/link";
-import { GitBranch, Users, FileText, Settings } from "lucide-react";
+import { GitBranch, Users, FileText, Settings, LucideIcon } from "lucide-react";
+
+interface Feature {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  disabled?: boolean;
+}
 
 export default function Home() {
-  const features = [
+  const features: Feature[] = [
     {
       href: "/workflows",
       icon: GitBranch,
@@ -26,7 +34,6 @@ export default function Home() {
       icon: Settings,
       title: "Settings",
       description: "Configure Twilio, SendGrid, and other integrations",
-      disabled: true,
     },
   ];
 
@@ -55,6 +62,12 @@ export default function Home() {
                 className="text-sm text-gray-600 hover:text-gray-900"
               >
                 Templates
+              </Link>
+              <Link
+                href="/settings"
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Settings
               </Link>
             </nav>
           </div>

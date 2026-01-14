@@ -722,3 +722,242 @@ export async function deleteTemplate(id: string): Promise<void> {
   const { error } = await getSupabase().from("templates").delete().eq("id", id);
   if (error) throw error;
 }
+
+// =============================================================================
+// Message Operations
+// =============================================================================
+
+import type {
+  Message,
+  MessageFilters,
+  CreateMessageInput,
+  UpdateMessageInput,
+} from "@/types/message";
+
+export async function getMessages(
+  filters?: MessageFilters,
+  pagination?: { page: number; pageSize: number }
+): Promise<Message[]> {
+  const client = getSupabase();
+
+  const page = pagination?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = client
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  // Apply filters
+  if (filters?.contact_id) {
+    query = query.eq("contact_id", filters.contact_id);
+  }
+
+  if (filters?.channel) {
+    query = query.eq("channel", filters.channel);
+  }
+
+  if (filters?.direction) {
+    query = query.eq("direction", filters.direction);
+  }
+
+  if (filters?.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  if (filters?.dateFrom) {
+    query = query.gte("created_at", filters.dateFrom);
+  }
+
+  if (filters?.dateTo) {
+    query = query.lte("created_at", filters.dateTo);
+  }
+
+  query = query.range(from, to);
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as Message[];
+}
+
+export async function getMessagesByContact(contactId: string): Promise<Message[]> {
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (data || []) as Message[];
+}
+
+export async function getMessage(id: string): Promise<Message | null> {
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as Message;
+}
+
+export async function getMessageByProviderId(providerId: string): Promise<Message | null> {
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .select("*")
+    .eq("provider_id", providerId)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as Message;
+}
+
+export async function createMessage(input: CreateMessageInput): Promise<Message> {
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .insert({
+      contact_id: input.contact_id,
+      channel: input.channel,
+      direction: input.direction,
+      subject: input.subject || null,
+      body: input.body,
+      status: input.status || "queued",
+      provider_id: input.provider_id || null,
+      provider_error: input.provider_error || null,
+      template_id: input.template_id || null,
+      workflow_execution_id: input.workflow_execution_id || null,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Message;
+}
+
+export async function updateMessage(input: UpdateMessageInput): Promise<Message> {
+  const { id, ...updates } = input;
+
+  const updateData: Record<string, unknown> = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Message;
+}
+
+export async function deleteMessage(id: string): Promise<void> {
+  const { error } = await getSupabase().from("messages").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function getMessageCount(filters?: MessageFilters): Promise<number> {
+  const client = getSupabase();
+
+  let query = client
+    .from("messages")
+    .select("*", { count: "exact", head: true });
+
+  // Apply filters
+  if (filters?.contact_id) {
+    query = query.eq("contact_id", filters.contact_id);
+  }
+
+  if (filters?.channel) {
+    query = query.eq("channel", filters.channel);
+  }
+
+  if (filters?.direction) {
+    query = query.eq("direction", filters.direction);
+  }
+
+  if (filters?.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  if (filters?.dateFrom) {
+    query = query.gte("created_at", filters.dateFrom);
+  }
+
+  if (filters?.dateTo) {
+    query = query.lte("created_at", filters.dateTo);
+  }
+
+  const { count, error } = await query;
+
+  if (error) throw error;
+  return count || 0;
+}
+
+// =============================================================================
+// Settings Operations
+// =============================================================================
+
+import type { Setting, SettingKey, UpdateSettingsInput } from "@/types/settings";
+
+export async function getSettings(): Promise<Setting[]> {
+  const { data, error } = await getSupabase()
+    .from("settings")
+    .select("*")
+    .order("key", { ascending: true });
+
+  if (error) throw error;
+  return (data || []) as Setting[];
+}
+
+export async function getSetting(key: SettingKey): Promise<Setting | null> {
+  const { data, error } = await getSupabase()
+    .from("settings")
+    .select("*")
+    .eq("key", key)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+  return data as Setting;
+}
+
+export async function updateSetting(key: SettingKey, value: string): Promise<Setting> {
+  const { data, error } = await getSupabase()
+    .from("settings")
+    .update({ value, updated_at: new Date().toISOString() })
+    .eq("key", key)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Setting;
+}
+
+export async function updateSettings(updates: UpdateSettingsInput[]): Promise<void> {
+  const client = getSupabase();
+
+  // Update each setting
+  for (const update of updates) {
+    const { error } = await client
+      .from("settings")
+      .update({ value: update.value, updated_at: new Date().toISOString() })
+      .eq("key", update.key);
+
+    if (error) throw error;
+  }
+}

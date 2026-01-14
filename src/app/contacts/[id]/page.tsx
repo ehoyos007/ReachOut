@@ -53,7 +53,9 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { MessageThread } from "@/components/contacts/MessageThread";
 import { useContactStore } from "@/lib/store/contactStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Contact, UpdateContactInput, CustomField, Tag as TagType } from "@/types/contact";
 import {
@@ -108,6 +110,12 @@ export default function ContactDetailPage() {
     setError,
   } = useContactStore();
 
+  const {
+    isTwilioConfigured,
+    isSendGridConfigured,
+    fetchSettings,
+  } = useSettingsStore();
+
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       setSupabaseReady(false);
@@ -117,7 +125,8 @@ export default function ContactDetailPage() {
     fetchContact(contactId);
     fetchCustomFields();
     fetchTags();
-  }, [contactId]);
+    fetchSettings();
+  }, [contactId, fetchContact, fetchCustomFields, fetchTags, fetchSettings]);
 
   // Initialize edit form when contact loads or editing starts
   useEffect(() => {
@@ -548,32 +557,13 @@ export default function ContactDetailPage() {
               </Card>
             )}
 
-            {/* Message History Placeholder */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Message History
-                </CardTitle>
-                <CardDescription>
-                  View all SMS and email communications with this contact
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <MessageSquare className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
-                    No messages yet
-                  </h3>
-                  <p className="text-sm text-gray-500 max-w-xs">
-                    Message history will appear here once you start sending SMS or
-                    emails to this contact.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Message History */}
+            <MessageThread
+              contactId={contactId}
+              contactEmail={currentContact.email}
+              contactPhone={currentContact.phone}
+              contactName={getContactDisplayName(currentContact)}
+            />
           </div>
 
           {/* Sidebar */}
@@ -703,24 +693,48 @@ export default function ContactDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  disabled
+                  disabled={!isSendGridConfigured || !currentContact.email}
+                  onClick={() => {
+                    // Scroll to message thread and it will handle compose
+                    const messageSection = document.querySelector('[data-message-thread]');
+                    messageSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Send Email
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    Coming Soon
-                  </Badge>
+                  {!isSendGridConfigured && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      Configure SendGrid
+                    </Badge>
+                  )}
+                  {isSendGridConfigured && !currentContact.email && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      No Email
+                    </Badge>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  disabled
+                  disabled={!isTwilioConfigured || !currentContact.phone}
+                  onClick={() => {
+                    // Scroll to message thread and it will handle compose
+                    const messageSection = document.querySelector('[data-message-thread]');
+                    messageSection?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                 >
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Send SMS
-                  <Badge variant="secondary" className="ml-auto text-xs">
-                    Coming Soon
-                  </Badge>
+                  {!isTwilioConfigured && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      Configure Twilio
+                    </Badge>
+                  )}
+                  {isTwilioConfigured && !currentContact.phone && (
+                    <Badge variant="secondary" className="ml-auto text-xs">
+                      No Phone
+                    </Badge>
+                  )}
                 </Button>
               </CardContent>
             </Card>

@@ -1,8 +1,8 @@
 # TASKS.md
 
 ## Current Sprint/Focus
-**Phase 5: Messaging**
-Building the messaging integrations (Twilio, SendGrid) for SMS and Email.
+**Phase 7: Notifications & Phase 8: Workflow Execution**
+Building notifications system and the workflow execution engine.
 
 ---
 
@@ -13,55 +13,7 @@ Building the messaging integrations (Twilio, SendGrid) for SMS and Email.
 
 ## To Do
 
-### Medium Priority (Phase 5: Messaging)
-
-- [ ] **Database: Create messages table**
-  - Description: Messages with contact_id, channel, direction, body, status
-  - Blockers: Contacts table
-
-- [ ] **Integration: Twilio SMS sending**
-  - Description: Service module to send SMS via Twilio API
-  - Blockers: Settings configuration
-
-- [ ] **Integration: Twilio webhooks**
-  - Description: Inbound SMS + delivery status callbacks
-  - Blockers: SMS sending
-
-- [ ] **Integration: SendGrid email sending**
-  - Description: Service module to send email via SendGrid API
-  - Blockers: Settings configuration
-
-- [ ] **Integration: SendGrid webhooks**
-  - Description: Inbound Parse + event webhooks
-  - Blockers: Email sending
-
-- [ ] **UI: Contact message thread**
-  - Description: Chat-style thread in contact detail page
-  - Blockers: Messages table, integrations
-
-- [ ] **Feature: Manual message sending**
-  - Description: Send single SMS/email from contact page
-  - Blockers: Message thread
-
-### Medium Priority (Phase 6: Settings)
-
-- [ ] **Database: Create settings table**
-  - Description: Encrypted storage for API credentials
-  - Blockers: None
-
-- [ ] **UI: Settings page**
-  - Description: Tabbed interface for Twilio/SendGrid config
-  - Blockers: Settings table
-
-- [ ] **Feature: Twilio test function**
-  - Description: Send test SMS and display result
-  - Blockers: Settings page
-
-- [ ] **Feature: SendGrid test function**
-  - Description: Send test email and display result
-  - Blockers: Settings page
-
-### Lower Priority (Phase 7: Notifications)
+### Medium Priority (Phase 7: Notifications)
 
 - [ ] **Database: Create notifications table**
   - Description: Notifications with contact_id, type, read status
@@ -216,10 +168,36 @@ Building the messaging integrations (Twilio, SendGrid) for SMS and Email.
 - [x] Feature: SMS segment calculator (GSM vs Unicode detection)
 - [x] Updated home page navigation with Templates link
 
+### Phase 5: Messaging (Completed Jan 14, 2026)
+- [x] Database: Create messages table (channel, direction, status, provider_id)
+- [x] Database: Create settings table (for API credentials)
+- [x] Types & Store: Message management (TypeScript types, Zustand store)
+- [x] Types & Store: Settings management (TypeScript types, Zustand store)
+- [x] Integration: Twilio SMS sending service
+- [x] Integration: SendGrid email sending service
+- [x] API: /api/messages/send endpoint for sending messages
+- [x] API: /api/settings/test-twilio endpoint for connection testing
+- [x] API: /api/settings/test-sendgrid endpoint for connection testing
+- [x] UI: Contact message thread with chat-style bubbles
+- [x] UI: Compose message dialog (SMS/Email)
+- [x] Feature: Manual message sending from contact page
+
+### Phase 6: Settings (Completed Jan 14, 2026)
+- [x] Database: Settings table with provider credentials
+- [x] UI: Settings page with tabbed interface
+- [x] UI: Twilio configuration tab (Account SID, Auth Token, Phone Number)
+- [x] UI: SendGrid configuration tab (API Key, From Email, From Name)
+- [x] Feature: Twilio connection test function
+- [x] Feature: SendGrid connection test function
+- [x] Feature: Webhook URLs display section
+- [x] Updated home page navigation with Settings link
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
 ## Phase 4: Message Templates - COMPLETE
+## Phase 5: Messaging - COMPLETE
+## Phase 6: Settings - COMPLETE
 
 ---
 
@@ -250,11 +228,15 @@ Building the messaging integrations (Twilio, SendGrid) for SMS and Email.
 
 ## Notes
 
-**Current Priority:** Phase 5 (Messaging) - Twilio and SendGrid integrations.
+**Current Priority:** Phase 7 (Notifications) and Phase 8 (Workflow Execution).
 
 **Dependencies:**
-- Phase 5 (Messaging) requires Phase 6 (Settings) for credentials
-- Phase 8 (Execution) requires Phases 3, 4, 5, 6
+- Phase 7 (Notifications) requires Phase 5 (Messaging) - DONE
+- Phase 8 (Execution) requires Phases 3, 4, 5, 6 - ALL DONE
+
+**Remaining:**
+- Webhook endpoints for inbound messages and status callbacks
+- Test full messaging flow with real Twilio/SendGrid credentials
 
 ---
 
