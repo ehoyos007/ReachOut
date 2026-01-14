@@ -8,6 +8,20 @@ jest.mock('next/link', () => {
   };
 });
 
+// Mock next/navigation for App Router components (NotificationsDropdown uses useRouter)
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    prefetch: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 describe('Home Page', () => {
   beforeEach(() => {
     render(<Home />);
