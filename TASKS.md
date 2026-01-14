@@ -194,6 +194,16 @@ Building the contact system foundation that workflows will operate on.
 - [x] UI: Create contact dialog
 - [x] UI: App navigation and home page
 
+### Testing Infrastructure (Completed Jan 14, 2026)
+- [x] Set up Jest + React Testing Library for Next.js
+- [x] Write tests for workflowStore (31 tests)
+- [x] Write tests for contactStore (31 tests)
+- [x] Write tests for workflow helpers (28 tests)
+- [x] Write tests for contact helpers (30 tests)
+- [x] Write tests for Home page component (10 tests)
+- [x] Set up GitHub Actions CI workflow (lint, test, build, typecheck)
+- [x] Total: 130 tests passing
+
 ---
 
 ## Known Issues

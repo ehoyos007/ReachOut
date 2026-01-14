@@ -4,6 +4,54 @@
 
 ---
 
+## January 14, 2026 — Session 4
+
+### Summary
+Testing infrastructure setup with Jest, React Testing Library, and GitHub Actions CI.
+
+### Completed
+- [x] Installed Jest 30, React Testing Library, and jest-environment-jsdom
+- [x] Created Jest configuration (jest.config.js, jest.setup.js) for Next.js
+- [x] Added test scripts to package.json (test, test:watch, test:coverage, test:ci)
+- [x] Wrote comprehensive tests for workflowStore (31 tests)
+- [x] Wrote comprehensive tests for contactStore (31 tests)
+- [x] Wrote tests for workflow helper functions (28 tests)
+- [x] Wrote tests for contact helper functions (30 tests)
+- [x] Wrote tests for Home page component (10 tests)
+- [x] Set up GitHub Actions CI workflow with lint, test, build, and typecheck jobs
+- [x] All 130 tests passing
+
+### Files Changed
+- `package.json` — Added test scripts and dev dependencies (@testing-library/*, jest, ts-jest)
+- `jest.config.js` — New: Jest configuration for Next.js with path aliases
+- `jest.setup.js` — New: Test setup with jsdom mocks (matchMedia, ResizeObserver, crypto)
+- `src/__tests__/stores/workflowStore.test.ts` — New: 31 tests for workflow store
+- `src/__tests__/stores/contactStore.test.ts` — New: 31 tests for contact store
+- `src/__tests__/lib/workflow-helpers.test.ts` — New: 28 tests for workflow types/helpers
+- `src/__tests__/lib/contact-helpers.test.ts` — New: 30 tests for contact types/helpers
+- `src/__tests__/components/HomePage.test.tsx` — New: 10 tests for Home page
+- `src/__mocks__/supabase.ts` — New: Mock implementations for Supabase operations
+- `.github/workflows/ci.yml` — New: GitHub Actions CI workflow
+
+### Decisions Made
+- **Jest over Vitest:** Chose Jest for better Next.js integration and larger ecosystem
+- **Critical paths first:** Focused on stores and utility functions for initial test coverage
+- **Mock Supabase:** Created mock implementations to test stores without database
+- **CI Jobs:** Separate jobs for lint, test, build, and typecheck for parallel execution
+
+### Blockers / Issues Encountered
+- **Jest 30 flag change:** `--testPathPattern` replaced with `--testPathPatterns`
+- **Mock file location:** Moved mocks from `__tests__/__mocks__` to `src/__mocks__` to prevent Jest treating them as test files
+- **Duplicate text elements:** Fixed component tests to use `getAllByText` for elements appearing multiple times
+
+### Next Steps
+- [ ] Continue with Phase 3: Contact detail page
+- [ ] Add CSV import functionality
+- [ ] Implement custom fields management UI
+- [ ] Create tags management UI
+
+---
+
 ## January 14, 2026 — Session 3
 
 ### Summary
