@@ -4,6 +4,32 @@
 
 ---
 
+## January 14, 2026 — Session 12
+
+### Summary
+Fixed CI test failure: "invariant expected app router to be mounted" error in HomePage tests.
+
+### Completed
+- [x] Diagnosed test failure caused by NotificationsDropdown using `useRouter()` from next/navigation
+- [x] Added `jest.mock('next/navigation')` to mock App Router hooks (useRouter, usePathname, useSearchParams)
+- [x] Verified all 131 tests passing locally
+- [x] Committed and pushed fix to main branch
+
+### Files Changed
+- `src/__tests__/components/HomePage.test.tsx` — Added mock for next/navigation hooks
+
+### Decisions Made
+- **Scoped mock:** Added the mock directly in the test file rather than globally in jest.setup.ts to keep mocks scoped to tests that need them
+
+### Blockers / Issues Encountered
+- **Root cause:** NotificationsDropdown component calls `useRouter()` at component level, which requires App Router context that tests don't provide
+
+### Next Steps
+- [ ] Phase 9: Polish (UI improvements, loading states, dashboard)
+- [ ] Add notifications dropdown to other pages (workflows, contacts, templates, settings)
+
+---
+
 ## January 14, 2026 — Session 11
 
 ### Summary
@@ -673,4 +699,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 11)
+**Last Updated:** January 14, 2026 (Session 12)
