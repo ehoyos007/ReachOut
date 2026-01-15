@@ -4,6 +4,45 @@
 
 ---
 
+## January 15, 2026 — Session 36
+
+### Summary
+Implemented advanced conditional logic for the Conditional Split node - Users can now add multiple conditions with AND/OR operators, group conditions together, and apply AND/OR logic between groups.
+
+### Completed
+- [x] Added `Condition` and `ConditionGroup` interfaces for multi-condition support
+- [x] Added `LogicalOperator` type for AND/OR logic
+- [x] Updated `ConditionalSplitData` with `conditionGroups` and `groupOperator`
+- [x] Added utility functions: `createCondition()`, `createConditionGroup()`, `migrateConditionalSplitData()`
+- [x] Added helper functions: `formatConditionSummary()`, `shouldShowComplexityWarning()`, `countConditions()`
+- [x] Updated workflow executor with `evaluateConditionGroup()` and `evaluateAllConditions()`
+- [x] Created `ConditionRow` component for single condition UI (field/operator/value)
+- [x] Created `ConditionGroupCard` component for grouped conditions with AND/OR toggle
+- [x] Rewrote `ConditionalSplitPanel` with full group management UI
+- [x] Added complexity warning banner (shows at 5+ groups or 10+ conditions)
+- [x] Updated `ConditionalSplitNode` with summary text and tooltip breakdown
+- [x] Implemented backward compatibility migration for legacy single-condition data
+
+### Files Changed
+- `src/types/workflow.ts` — Extended: Added Condition, ConditionGroup, LogicalOperator types and utility functions
+- `src/lib/workflow-executor/node-processors.ts` — Extended: Added group evaluation logic with AND/OR support
+- `src/components/workflow/panels/ConditionRow.tsx` — New: Single condition row component
+- `src/components/workflow/panels/ConditionGroupCard.tsx` — New: Condition group card component
+- `src/components/workflow/panels/ConditionalSplitPanel.tsx` — Rewritten: Full group management UI
+- `src/components/workflow/nodes/ConditionalSplitNode.tsx` — Updated: Summary text with tooltip
+
+### Decisions Made
+- **Soft limits for complexity:** Warning shown at 5+ groups or 10+ conditions, but no hard block
+- **Always show full UI:** Groups interface shown consistently even for simple single conditions
+- **Summary text on node:** Shows "3 conditions (2 groups)" with tooltip for full breakdown
+
+### Next Steps
+- [ ] Test all operator combinations (AND/OR within and between groups)
+- [ ] Test workflow execution with complex conditions
+- [ ] Consider adding condition templates for common patterns
+
+---
+
 ## January 15, 2026 — Session 35
 
 ### Summary
