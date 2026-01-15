@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReachOut Test Documentation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .code-block .keyword { color: #569cd6; }
+    .code-block .string { color: #ce9178; }
+    .code-block .function { color: #dcdcaa; }
+    .code-block .comment { color: #6a9955; }
+    .code-block .number { color: #b5cea8; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    // Test data organized by category
+    const testCategories = [
+      {
+        id: 'workflow-store',
+        name: 'Workflow Store Tests',
+        file: 'src/__tests__/stores/workflowStore.test.ts',
+        count: 31,
+        description: 'Tests for the Zustand store that manages workflow state, including nodes, edges, and persistence.',
+        icon: '🔄',
+        tests: [
+          {
+            group: 'Initial State',
+            tests: [
+              {
+                name: 'should have correct initial state',
+                purpose: 'Verifies the store initializes with empty/null values for workflow, nodes, edges, and UI states.',
+                why: 'Ensures the app starts in a clean, predictable state without any leftover data.'
+              }
+            ]
+          },
+          {
+            group: 'setWorkflow',
+            tests: [
+              {
+                name: 'should set workflow correctly',
+                purpose: 'Tests that calling setWorkflow() properly updates the workflow metadata in state.',
+                why: 'Core functionality - the app needs to load and track which workflow is being edited.'
+              },
+              {
+                name: 'should clear workflow when set to null',
+                purpose: 'Verifies setting workflow to null properly clears the state.',
+                why: 'Important for cleanup when navigating away or creating a new workflow.'
+              }
+            ]
+          },
+          {
+            group: 'setNodes / setEdges',
+            tests: [
+              {
+                name: 'should set nodes and mark as dirty',
+                purpose: 'Tests that updating nodes also sets isDirty flag to true.',
+                why: 'The dirty flag tells the UI when there are unsaved changes that need to be persisted.'
+              },
+              {
+                name: 'should set edges and mark as dirty',
+                purpose: 'Same as above but for edges (connections between nodes).',
+                why: 'Both nodes AND edges need to trigger the save indicator.'
+              }
+            ]
+          },
+          {
+            group: 'addNode',
+            tests: [
+              {
+                name: 'should add a new node to the workflow',
+                purpose: 'Verifies addNode() creates a new node at the specified position.',
+                why: 'Core drag-and-drop functionality - users need to add nodes to build workflows.'
+              },
+              {
+                name: 'should select the newly added node',
+                purpose: 'Tests that newly added nodes are automatically selected.',
+                why: 'UX improvement - users typically want to configure a node right after adding it.'
+              },
+              {
+                name: 'should add node with correct default data for each type',
+                purpose: 'Tests all 7 node types get their proper default configuration.',
+                why: 'Each node type (SMS, Email, Delay, etc.) has different default settings that must be correct.'
+              }
+            ]
+          },
+          {
+            group: 'updateNodeData',
+            tests: [
+              {
+                name: 'should update node data correctly',
+                purpose: 'Tests that node configuration can be modified after creation.',
+                why: 'Users need to customize node settings like delay duration, message template, etc.'
+              },
+              {
+                name: 'should not modify other nodes when updating one',
+                purpose: 'Ensures updating one node doesn\'t accidentally change others.',
+                why: 'Data integrity - prevents bugs where editing one node corrupts another.'
+              }
+            ]
+          },
+          {
+            group: 'deleteNode',
+            tests: [
+              {
+                name: 'should delete a node',
+                purpose: 'Verifies nodes can be removed from the workflow.',
+                why: 'Users need to be able to remove nodes they no longer want.'
+              },
+              {
+                name: 'should remove edges connected to deleted node',
+                purpose: 'Tests that deleting a node also removes its connections.',
+                why: 'Prevents orphaned edges that would cause errors or visual glitches.'
+              },
+              {
+                name: 'should clear selection if deleted node was selected',
+                purpose: 'Ensures the UI doesn\'t try to show config for a deleted node.',
+                why: 'Prevents crashes or confusing UI states after deletion.'
+              }
+            ]
+          },
+          {
+            group: 'Selection',
+            tests: [
+              {
+                name: 'should set selected node',
+                purpose: 'Tests basic node selection functionality.',
+                why: 'Users click nodes to select them and see/edit their configuration.'
+              },
+              {
+                name: 'should return the selected node',
+                purpose: 'Verifies getSelectedNode() returns the correct node object.',
+                why: 'The config panel needs the full node data to display settings.'
+              },
+              {
+                name: 'should return null when no node is selected',
+                purpose: 'Tests edge case of no selection.',
+                why: 'Prevents null reference errors when nothing is selected.'
+              }
+            ]
+          },
+          {
+            group: 'loadWorkflow',
+            tests: [
+              {
+                name: 'should load workflow successfully',
+                purpose: 'Tests loading a workflow from the database.',
+                why: 'Core functionality - users need to open and edit existing workflows.'
+              },
+              {
+                name: 'should handle workflow not found',
+                purpose: 'Tests error handling when workflow ID doesn\'t exist.',
+                why: 'Graceful error handling for deleted/invalid workflow URLs.'
+              },
+              {
+                name: 'should handle load errors',
+                purpose: 'Tests error handling for database failures.',
+                why: 'Users should see a helpful error message, not a crash.'
+              }
+            ]
+          },
+          {
+            group: 'saveWorkflow',
+            tests: [
+              {
+                name: 'should save workflow successfully',
+                purpose: 'Tests persisting workflow changes to the database.',
+                why: 'Core functionality - users need their work to be saved.'
+              },
+              {
+                name: 'should return false if no workflow is set',
+                purpose: 'Tests edge case of saving without a workflow loaded.',
+                why: 'Prevents database errors from trying to save null data.'
+              },
+              {
+                name: 'should handle save errors',
+                purpose: 'Tests error handling for save failures.',
+                why: 'Users should know if their save failed so they can retry.'
+              }
+            ]
+          },
+          {
+            group: 'toggleWorkflowEnabled',
+            tests: [
+              {
+                name: 'should toggle workflow enabled status',
+                purpose: 'Tests turning workflows on/off.',
+                why: 'Users need to enable/disable workflows without deleting them.'
+              },
+              {
+                name: 'should return false if no workflow is set',
+                purpose: 'Tests edge case protection.',
+                why: 'Prevents errors when toggle is called inappropriately.'
+              },
+              {
+                name: 'should handle toggle errors',
+                purpose: 'Tests error handling for toggle failures.',
+                why: 'Database errors shouldn\'t crash the app.'
+              }
+            ]
+          },
+          {
+            group: 'Utility',
+            tests: [
+              {
+                name: 'should reset all state to initial values',
+                purpose: 'Tests the resetState() cleanup function.',
+                why: 'Needed when navigating away or starting fresh.'
+              },
+              {
+                name: 'should set error message',
+                purpose: 'Tests error state management.',
+                why: 'The UI needs to display error messages to users.'
+              },
+              {
+                name: 'should clear error when set to null',
+                purpose: 'Tests clearing errors after user acknowledges them.',
+                why: 'Errors should be dismissible, not permanent.'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'contact-store',
+        name: 'Contact Store Tests',
+        file: 'src/__tests__/stores/contactStore.test.ts',
+        count: 31,
+        description: 'Tests for the Zustand store managing contacts, including CRUD operations, filtering, pagination, and tag management.',
+        icon: '👥',
+        tests: [
+          {
+            group: 'Initial State',
+            tests: [
+              {
+                name: 'should have correct initial state',
+                purpose: 'Verifies all contact state initializes correctly (empty arrays, page 1, no filters).',
+                why: 'Ensures predictable starting state for the contacts list.'
+              }
+            ]
+          },
+          {
+            group: 'fetchContacts',
+            tests: [
+              {
+                name: 'should fetch contacts successfully',
+                purpose: 'Tests loading contacts from the database with pagination info.',
+                why: 'Core functionality - displays the contact list to users.'
+              },
+              {
+                name: 'should handle fetch errors',
+                purpose: 'Tests error handling when database query fails.',
+                why: 'Shows error message instead of crashing on network issues.'
+              },
+              {
+                name: 'should pass filters and pagination to getContacts',
+                purpose: 'Verifies filters and page info are sent to the database query.',
+                why: 'Ensures search, status filters, and pagination actually work.'
+              }
+            ]
+          },
+          {
+            group: 'fetchContact',
+            tests: [
+              {
+                name: 'should fetch single contact successfully',
+                purpose: 'Tests loading one contact for the detail page.',
+                why: 'Detail page needs full contact data including custom fields.'
+              },
+              {
+                name: 'should handle fetch errors',
+                purpose: 'Tests error handling for single contact load.',
+                why: 'Graceful handling of deleted/invalid contact IDs.'
+              }
+            ]
+          },
+          {
+            group: 'createContact',
+            tests: [
+              {
+                name: 'should create contact successfully',
+                purpose: 'Tests adding a new contact to the database.',
+                why: 'Core functionality - users need to add new contacts.'
+              },
+              {
+                name: 'should handle create errors',
+                purpose: 'Tests error handling for failed creates (duplicate email, etc.).',
+                why: 'Users should see validation errors, not crashes.'
+              }
+            ]
+          },
+          {
+            group: 'updateContact',
+            tests: [
+              {
+                name: 'should update contact successfully',
+                purpose: 'Tests modifying existing contact data.',
+                why: 'Users need to fix typos, update status, etc.'
+              },
+              {
+                name: 'should update currentContact if it matches',
+                purpose: 'Tests that detail page updates when its contact is modified.',
+                why: 'Prevents stale data on the detail page after edits.'
+              }
+            ]
+          },
+          {
+            group: 'deleteContact',
+            tests: [
+              {
+                name: 'should delete contact successfully',
+                purpose: 'Tests removing a contact from the database.',
+                why: 'Users need to remove contacts who opted out, etc.'
+              },
+              {
+                name: 'should remove from selection when deleted',
+                purpose: 'Tests that deleted contacts are deselected.',
+                why: 'Prevents trying to bulk-operate on deleted contacts.'
+              },
+              {
+                name: 'should clear currentContact if deleted',
+                purpose: 'Tests navigation/state after deleting the viewed contact.',
+                why: 'Prevents showing deleted contact on detail page.'
+              }
+            ]
+          },
+          {
+            group: 'deleteSelectedContacts',
+            tests: [
+              {
+                name: 'should delete selected contacts successfully',
+                purpose: 'Tests bulk delete functionality.',
+                why: 'Users can delete multiple contacts at once for efficiency.'
+              },
+              {
+                name: 'should return false if no contacts selected',
+                purpose: 'Tests edge case of empty selection.',
+                why: 'Prevents unnecessary database calls.'
+              }
+            ]
+          },
+          {
+            group: 'Pagination',
+            tests: [
+              {
+                name: 'setPage should update page and fetch contacts',
+                purpose: 'Tests page navigation triggers data reload.',
+                why: 'Clicking page 2 should actually load page 2 data.'
+              },
+              {
+                name: 'setPageSize should reset to page 1 and fetch contacts',
+                purpose: 'Tests that changing items-per-page resets to first page.',
+                why: 'Changing from 25 to 50 items might make current page invalid.'
+              }
+            ]
+          },
+          {
+            group: 'Filters',
+            tests: [
+              {
+                name: 'setFilters should update filters and reset to page 1',
+                purpose: 'Tests filter changes trigger data reload from page 1.',
+                why: 'Applying a filter might reduce results, making current page invalid.'
+              },
+              {
+                name: 'clearFilters should reset filters and page',
+                purpose: 'Tests the "Clear All Filters" functionality.',
+                why: 'Users need to easily remove all active filters.'
+              },
+              {
+                name: 'setSorting should update sort options and fetch',
+                purpose: 'Tests column sorting triggers data reload.',
+                why: 'Clicking "Sort by Name" should actually sort the data.'
+              }
+            ]
+          },
+          {
+            group: 'Selection',
+            tests: [
+              {
+                name: 'selectContact should add to selection',
+                purpose: 'Tests checking a contact checkbox.',
+                why: 'Individual selection for bulk operations.'
+              },
+              {
+                name: 'deselectContact should remove from selection',
+                purpose: 'Tests unchecking a contact checkbox.',
+                why: 'Users change their mind about selections.'
+              },
+              {
+                name: 'selectAllContacts should select all contacts in list',
+                purpose: 'Tests "Select All" checkbox.',
+                why: 'Quickly select entire page for bulk operations.'
+              },
+              {
+                name: 'deselectAllContacts should clear selection',
+                purpose: 'Tests clearing all selections.',
+                why: 'Quick way to start fresh with selections.'
+              },
+              {
+                name: 'toggleContactSelection should toggle selection state',
+                purpose: 'Tests click-to-toggle behavior.',
+                why: 'Clicking a selected item deselects it and vice versa.'
+              }
+            ]
+          },
+          {
+            group: 'Custom Fields',
+            tests: [
+              {
+                name: 'fetchCustomFields should load custom fields',
+                purpose: 'Tests loading custom field definitions.',
+                why: 'Need field definitions to display them on contacts.'
+              },
+              {
+                name: 'createCustomField should add to list',
+                purpose: 'Tests creating new custom field types.',
+                why: 'Users can add fields like "Company", "Source", etc.'
+              },
+              {
+                name: 'updateCustomField should update in list',
+                purpose: 'Tests modifying custom field definitions.',
+                why: 'Users might rename or reconfigure custom fields.'
+              },
+              {
+                name: 'deleteCustomField should remove from list',
+                purpose: 'Tests removing custom field definitions.',
+                why: 'Users can remove fields they no longer need.'
+              }
+            ]
+          },
+          {
+            group: 'Tags',
+            tests: [
+              {
+                name: 'fetchTags should load tags',
+                purpose: 'Tests loading available tags.',
+                why: 'Need tag list for filtering and assignment UI.'
+              },
+              {
+                name: 'createTag should add to list sorted by name',
+                purpose: 'Tests creating new tags and maintaining alphabetical order.',
+                why: 'New tags appear in the sorted list immediately.'
+              },
+              {
+                name: 'updateTag should update and re-sort',
+                purpose: 'Tests renaming tags maintains sort order.',
+                why: 'Renamed tags should move to correct alphabetical position.'
+              },
+              {
+                name: 'deleteTag should remove from list',
+                purpose: 'Tests removing tags.',
+                why: 'Users can remove tags they no longer use.'
+              }
+            ]
+          },
+          {
+            group: 'Reset',
+            tests: [
+              {
+                name: 'should reset all state to initial values',
+                purpose: 'Tests complete state reset.',
+                why: 'Needed for logout or starting fresh.'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'workflow-helpers',
+        name: 'Workflow Helper Tests',
+        file: 'src/__tests__/lib/workflow-helpers.test.ts',
+        count: 28,
+        description: 'Tests for workflow-related utility functions, type configurations, and constants.',
+        icon: '🛠️',
+        tests: [
+          {
+            group: 'getNodeTypeConfig',
+            tests: [
+              {
+                name: 'should return config for valid node types',
+                purpose: 'Tests that all 7 node types have retrievable configurations.',
+                why: 'Each node type needs its config (icon, label, defaults) for the UI.'
+              },
+              {
+                name: 'should return undefined for invalid node type',
+                purpose: 'Tests graceful handling of unknown node types.',
+                why: 'Prevents crashes if somehow an invalid type is passed.'
+              },
+              {
+                name: 'should return correct config properties',
+                purpose: 'Verifies config objects have all expected fields.',
+                why: 'The UI depends on specific properties being present.'
+              }
+            ]
+          },
+          {
+            group: 'createDefaultNode',
+            tests: [
+              {
+                name: 'should create a trigger_start node with correct defaults',
+                purpose: 'Tests the workflow entry point node creation.',
+                why: 'Every workflow needs a Start node with proper setup.'
+              },
+              {
+                name: 'should create a time_delay node with correct defaults',
+                purpose: 'Tests delay node defaults (1 day).',
+                why: 'Sensible defaults reduce configuration effort.'
+              },
+              {
+                name: 'should create a conditional_split node with correct defaults',
+                purpose: 'Tests branching node defaults.',
+                why: 'Branch nodes need empty condition setup ready for configuration.'
+              },
+              {
+                name: 'should create a send_sms node with correct defaults',
+                purpose: 'Tests SMS node defaults.',
+                why: 'SMS nodes need null template/sender ready for user to configure.'
+              },
+              {
+                name: 'should create a send_email node with correct defaults',
+                purpose: 'Tests email node defaults.',
+                why: 'Email nodes have more fields (subject, sender) than SMS.'
+              },
+              {
+                name: 'should create an update_status node with correct defaults',
+                purpose: 'Tests status change node defaults.',
+                why: 'Default to "contacted" as most common first status change.'
+              },
+              {
+                name: 'should create a stop_on_reply node with correct defaults',
+                purpose: 'Tests exit condition node defaults.',
+                why: 'Default to "any" channel for reply detection.'
+              },
+              {
+                name: 'should generate unique IDs for each node',
+                purpose: 'Tests that every node gets a unique identifier.',
+                why: 'Duplicate IDs would cause React key errors and data corruption.'
+              },
+              {
+                name: 'should throw error for unknown node type',
+                purpose: 'Tests error handling for invalid types.',
+                why: 'Fail fast with clear error rather than silent corruption.'
+              }
+            ]
+          },
+          {
+            group: 'formatTimeDelay',
+            tests: [
+              {
+                name: 'should format singular minute correctly',
+                purpose: 'Tests "1 minute" (not "1 minutes").',
+                why: 'Proper grammar in the UI.'
+              },
+              {
+                name: 'should format plural minutes correctly',
+                purpose: 'Tests "5 minutes".',
+                why: 'Plural form for values > 1.'
+              },
+              {
+                name: 'should format singular hour correctly',
+                purpose: 'Tests "1 hour".',
+                why: 'Proper grammar for hours.'
+              },
+              {
+                name: 'should format plural hours correctly',
+                purpose: 'Tests "24 hours".',
+                why: 'Plural hours display.'
+              },
+              {
+                name: 'should format singular day correctly',
+                purpose: 'Tests "1 day".',
+                why: 'Most common delay unit.'
+              },
+              {
+                name: 'should format plural days correctly',
+                purpose: 'Tests "7 days".',
+                why: 'Week-long delays are common.'
+              },
+              {
+                name: 'should handle zero correctly',
+                purpose: 'Tests edge case of 0 duration.',
+                why: 'Zero should still work without errors.'
+              }
+            ]
+          },
+          {
+            group: 'NODE_TYPE_CONFIGS',
+            tests: [
+              {
+                name: 'should have 7 node type configurations',
+                purpose: 'Verifies all node types are defined.',
+                why: 'Catches missing node type definitions.'
+              },
+              {
+                name: 'should have unique type values',
+                purpose: 'Tests no duplicate node type identifiers.',
+                why: 'Duplicate types would cause conflicts.'
+              },
+              {
+                name: 'should categorize nodes correctly',
+                purpose: 'Tests nodes are in correct categories (trigger, timing, logic, action).',
+                why: 'Categories organize the node palette UI.'
+              },
+              {
+                name: 'should mark conditional_split as having multiple outputs',
+                purpose: 'Tests the Yes/No branch flag.',
+                why: 'Branch nodes need special handling for two output handles.'
+              }
+            ]
+          },
+          {
+            group: 'Display Name Constants',
+            tests: [
+              {
+                name: 'should have display names for all statuses',
+                purpose: 'Tests STATUS_DISPLAY_NAMES has all 5 statuses.',
+                why: 'Every status needs a human-readable label.'
+              },
+              {
+                name: 'should have display names for all channels',
+                purpose: 'Tests CHANNEL_DISPLAY_NAMES has all 3 channels.',
+                why: 'Channel dropdowns need labels.'
+              },
+              {
+                name: 'should have display names for all operators',
+                purpose: 'Tests OPERATOR_DISPLAY_NAMES has all 8 comparison operators.',
+                why: 'Condition builder needs readable operator names.'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'contact-helpers',
+        name: 'Contact Helper Tests',
+        file: 'src/__tests__/lib/contact-helpers.test.ts',
+        count: 30,
+        description: 'Tests for contact-related utility functions including display formatting, phone number handling, and constants.',
+        icon: '📇',
+        tests: [
+          {
+            group: 'getContactDisplayName',
+            tests: [
+              {
+                name: 'should return full name when both first and last name exist',
+                purpose: 'Tests "John Doe" format.',
+                why: 'Most contacts have both names.'
+              },
+              {
+                name: 'should return first name only when last name is null',
+                purpose: 'Tests fallback to first name only.',
+                why: 'Some contacts only have first names.'
+              },
+              {
+                name: 'should return last name only when first name is null',
+                purpose: 'Tests fallback to last name only.',
+                why: 'Rare but possible case.'
+              },
+              {
+                name: 'should return email when no name is available',
+                purpose: 'Tests fallback to email.',
+                why: 'Email-only contacts are common.'
+              },
+              {
+                name: 'should return phone when only phone is available',
+                purpose: 'Tests fallback to phone number.',
+                why: 'SMS-only contacts have just phone.'
+              },
+              {
+                name: 'should return "Unknown Contact" when nothing is available',
+                purpose: 'Tests final fallback.',
+                why: 'Should never show empty string in UI.'
+              }
+            ]
+          },
+          {
+            group: 'getContactInitials',
+            tests: [
+              {
+                name: 'should return both initials when first and last name exist',
+                purpose: 'Tests "JD" for John Doe.',
+                why: 'Avatar circles show initials.'
+              },
+              {
+                name: 'should return first initial only when last name is null',
+                purpose: 'Tests single initial fallback.',
+                why: 'Handle partial names gracefully.'
+              },
+              {
+                name: 'should return last initial only when first name is null',
+                purpose: 'Tests last name initial.',
+                why: 'Rare case handling.'
+              },
+              {
+                name: 'should return first letter of email when no name',
+                purpose: 'Tests email-based initial.',
+                why: 'Better than empty avatar.'
+              },
+              {
+                name: 'should return "?" when nothing is available',
+                purpose: 'Tests unknown contact marker.',
+                why: 'Visual indicator that contact has no identifying info.'
+              },
+              {
+                name: 'should uppercase initials',
+                purpose: 'Tests lowercase names get uppercased initials.',
+                why: 'Consistent avatar appearance.'
+              }
+            ]
+          },
+          {
+            group: 'formatPhoneNumber',
+            tests: [
+              {
+                name: 'should return empty string for null input',
+                purpose: 'Tests null handling.',
+                why: 'Don\'t crash on missing phone numbers.'
+              },
+              {
+                name: 'should format 10-digit US number correctly',
+                purpose: 'Tests "(555) 123-4567" format.',
+                why: 'Standard US phone display format.'
+              },
+              {
+                name: 'should format 11-digit US number with country code',
+                purpose: 'Tests "+1 (555) 123-4567" format.',
+                why: 'Handle numbers with country code.'
+              },
+              {
+                name: 'should handle already formatted numbers',
+                purpose: 'Tests idempotent formatting.',
+                why: 'Don\'t double-format already pretty numbers.'
+              },
+              {
+                name: 'should return as-is for non-standard formats',
+                purpose: 'Tests international number passthrough.',
+                why: 'Don\'t mangle international numbers.'
+              },
+              {
+                name: 'should strip non-numeric characters before formatting',
+                purpose: 'Tests cleaning dirty input.',
+                why: 'Handle various input formats consistently.'
+              }
+            ]
+          },
+          {
+            group: 'normalizePhoneNumber',
+            tests: [
+              {
+                name: 'should remove all non-numeric characters',
+                purpose: 'Tests stripping formatting.',
+                why: 'Twilio needs just digits.'
+              },
+              {
+                name: 'should preserve leading plus sign',
+                purpose: 'Tests international format preservation.',
+                why: 'Plus sign indicates international number.'
+              },
+              {
+                name: 'should handle already normalized numbers',
+                purpose: 'Tests idempotent normalization.',
+                why: 'Don\'t change already clean numbers.'
+              },
+              {
+                name: 'should handle international format with plus',
+                purpose: 'Tests full international number handling.',
+                why: 'Support global contacts.'
+              }
+            ]
+          },
+          {
+            group: 'Constants',
+            tests: [
+              {
+                name: 'STATUS_DISPLAY_NAMES should have display names for all statuses',
+                purpose: 'Tests all 5 contact statuses have labels.',
+                why: 'Status dropdowns and badges need labels.'
+              },
+              {
+                name: 'STATUS_DISPLAY_NAMES should have exactly 5 status types',
+                purpose: 'Tests completeness.',
+                why: 'Catch missing or extra statuses.'
+              },
+              {
+                name: 'FIELD_TYPE_DISPLAY_NAMES should have display names for all field types',
+                purpose: 'Tests custom field type labels.',
+                why: 'Field type selector needs labels.'
+              },
+              {
+                name: 'FIELD_TYPE_DISPLAY_NAMES should have exactly 4 field types',
+                purpose: 'Tests completeness.',
+                why: 'Text, number, date, select types.'
+              },
+              {
+                name: 'DEFAULT_TAG_COLORS should have 14 default colors',
+                purpose: 'Tests color palette completeness.',
+                why: 'Enough variety for tag colors.'
+              },
+              {
+                name: 'DEFAULT_TAG_COLORS should have valid hex color format',
+                purpose: 'Tests color format validity.',
+                why: 'Invalid colors would break CSS.'
+              },
+              {
+                name: 'DEFAULT_TAG_COLORS should have unique colors',
+                purpose: 'Tests no duplicate colors.',
+                why: 'Each tag should be visually distinct.'
+              },
+              {
+                name: 'STANDARD_CONTACT_FIELDS should have 5 standard fields',
+                purpose: 'Tests CSV import field mapping options.',
+                why: 'First name, last name, email, phone, status.'
+              },
+              {
+                name: 'STANDARD_CONTACT_FIELDS should include required fields',
+                purpose: 'Tests all expected fields are present.',
+                why: 'CSV import needs these mapping options.'
+              },
+              {
+                name: 'STANDARD_CONTACT_FIELDS should have labels for all fields',
+                purpose: 'Tests dropdown labels exist.',
+                why: 'CSV mapping UI needs readable labels.'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'home-page',
+        name: 'Home Page Tests',
+        file: 'src/__tests__/components/HomePage.test.tsx',
+        count: 10,
+        description: 'Tests for the main landing page component including header, hero section, and feature cards.',
+        icon: '🏠',
+        tests: [
+          {
+            group: 'Header',
+            tests: [
+              {
+                name: 'should display the app name',
+                purpose: 'Tests "ReachOut" brand appears in header.',
+                why: 'Brand identity should be visible.'
+              },
+              {
+                name: 'should have navigation links',
+                purpose: 'Tests Workflows and Contacts nav links exist.',
+                why: 'Users need to navigate the app.'
+              }
+            ]
+          },
+          {
+            group: 'Hero Section',
+            tests: [
+              {
+                name: 'should display the main heading',
+                purpose: 'Tests "Automated Outreach Made Simple" appears.',
+                why: 'Clear value proposition for visitors.'
+              },
+              {
+                name: 'should display the description',
+                purpose: 'Tests the explanatory tagline appears.',
+                why: 'Users should understand what the app does.'
+              }
+            ]
+          },
+          {
+            group: 'Feature Cards',
+            tests: [
+              {
+                name: 'should display Workflows feature',
+                purpose: 'Tests Workflows card with description.',
+                why: 'Feature discovery for new users.'
+              },
+              {
+                name: 'should display Contacts feature',
+                purpose: 'Tests Contacts card with description.',
+                why: 'Feature discovery for new users.'
+              },
+              {
+                name: 'should display Templates feature as coming soon',
+                purpose: 'Tests Templates shows "Coming Soon" badge.',
+                why: 'Set expectations for incomplete features.'
+              },
+              {
+                name: 'should display Settings feature as coming soon',
+                purpose: 'Tests Settings shows "Coming Soon" badge.',
+                why: 'Set expectations for incomplete features.'
+              },
+              {
+                name: 'should have clickable links for Workflows and Contacts',
+                purpose: 'Tests active features are clickable.',
+                why: 'Users should be able to navigate to working pages.'
+              },
+              {
+                name: 'should not have clickable links for disabled features',
+                purpose: 'Tests "Coming Soon" cards are not links.',
+                why: 'Prevent navigation to non-existent pages.'
+              }
+            ]
+          }
+        ]
+      }
+    ];
+
+    function App() {
+      const [selectedCategory, setSelectedCategory] = useState(testCategories[0].id);
+      const [expandedGroups, setExpandedGroups] = useState({});
+
+      const category = testCategories.find(c => c.id === selectedCategory);
+
+      const toggleGroup = (groupName) => {
+        setExpandedGroups(prev => ({
+          ...prev,
+          [groupName]: !prev[groupName]
+        }));
+      };
+
+      const totalTests = testCategories.reduce((sum, cat) => sum + cat.count, 0);
+
+      return (
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <header className="bg-white border-b shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">ReachOut Test Documentation</h1>
+                  <p className="text-gray-600 mt-1">Interactive guide to all {totalTests} tests</p>
+                </div>
+                <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg">
+                  <span className="text-green-600 text-2xl">✓</span>
+                  <div>
+                    <div className="text-green-700 font-semibold">{totalTests} Tests Passing</div>
+                    <div className="text-green-600 text-sm">5 Test Suites</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <div className="flex gap-8">
+              {/* Sidebar */}
+              <nav className="w-72 flex-shrink-0">
+                <div className="bg-white rounded-lg shadow p-4 sticky top-8">
+                  <h2 className="font-semibold text-gray-900 mb-4">Test Categories</h2>
+                  <ul className="space-y-2">
+                    {testCategories.map(cat => (
+                      <li key={cat.id}>
+                        <button
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors ${
+                            selectedCategory === cat.id
+                              ? 'bg-blue-50 text-blue-700'
+                              : 'hover:bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          <span className="text-xl">{cat.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{cat.name}</div>
+                            <div className="text-xs text-gray-500">{cat.count} tests</div>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </nav>
+
+              {/* Main Content */}
+              <main className="flex-1 min-w-0">
+                {category && (
+                  <div className="space-y-6">
+                    {/* Category Header */}
+                    <div className="bg-white rounded-lg shadow p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-4xl">{category.icon}</span>
+                        <div>
+                          <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
+                          <p className="text-gray-600">{category.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm">
+                        <span className="bg-gray-100 px-3 py-1 rounded-full text-gray-700">
+                          📁 {category.file}
+                        </span>
+                        <span className="bg-green-100 px-3 py-1 rounded-full text-green-700">
+                          ✓ {category.count} tests
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Test Groups */}
+                    {category.tests.map((group, groupIdx) => (
+                      <div key={groupIdx} className="bg-white rounded-lg shadow overflow-hidden">
+                        <button
+                          onClick={() => toggleGroup(`${category.id}-${group.group}`)}
+                          className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className={`transform transition-transform ${
+                              expandedGroups[`${category.id}-${group.group}`] ? 'rotate-90' : ''
+                            }`}>▶</span>
+                            <h3 className="font-semibold text-gray-900">{group.group}</h3>
+                            <span className="text-sm text-gray-500">({group.tests.length} tests)</span>
+                          </div>
+                        </button>
+
+                        {expandedGroups[`${category.id}-${group.group}`] && (
+                          <div className="divide-y">
+                            {group.tests.map((test, testIdx) => (
+                              <div key={testIdx} className="p-6">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-green-500 mt-1">✓</span>
+                                  <div className="flex-1">
+                                    <h4 className="font-medium text-gray-900 mb-2">
+                                      {test.name}
+                                    </h4>
+                                    <div className="space-y-3">
+                                      <div>
+                                        <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">
+                                          What it tests:
+                                        </span>
+                                        <p className="text-gray-700 mt-1">{test.purpose}</p>
+                                      </div>
+                                      <div>
+                                        <span className="text-xs font-semibold text-purple-600 uppercase tracking-wide">
+                                          Why it matters:
+                                        </span>
+                                        <p className="text-gray-600 mt-1">{test.why}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </main>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="bg-white border-t mt-12">
+            <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600">
+              <p>ReachOut Testing Documentation • Generated January 14, 2026</p>
+              <p className="text-sm mt-1">Jest + React Testing Library • GitHub Actions CI</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>

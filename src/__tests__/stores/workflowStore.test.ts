@@ -33,7 +33,7 @@ describe('workflowStore', () => {
     id: 'test-node-1',
     type: 'trigger_start',
     position: { x: 100, y: 100 },
-    data: { label: 'Start' },
+    data: { label: 'Start', triggerConfig: { type: 'manual' } },
   };
 
   beforeEach(() => {

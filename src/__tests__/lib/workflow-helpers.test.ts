@@ -171,8 +171,8 @@ describe('workflow helpers', () => {
   });
 
   describe('NODE_TYPE_CONFIGS', () => {
-    it('should have 7 node type configurations', () => {
-      expect(NODE_TYPE_CONFIGS).toHaveLength(7);
+    it('should have 8 node type configurations', () => {
+      expect(NODE_TYPE_CONFIGS).toHaveLength(8);
     });
 
     it('should have unique type values', () => {
@@ -190,7 +190,7 @@ describe('workflow helpers', () => {
       expect(categories.trigger).toBe(1);
       expect(categories.timing).toBe(1);
       expect(categories.logic).toBe(2);
-      expect(categories.action).toBe(3);
+      expect(categories.action).toBe(4);
     });
 
     it('should mark conditional_split as having multiple outputs', () => {
