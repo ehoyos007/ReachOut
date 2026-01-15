@@ -20,7 +20,7 @@ import {
   formatCallDuration,
   isInboundEvent,
 } from "@/lib/timeline-utils";
-import { MESSAGE_STATUS_DISPLAY } from "@/types/message";
+import { MESSAGE_STATUS_DISPLAY, MESSAGE_SOURCE_DISPLAY, MESSAGE_SOURCE_COLORS } from "@/types/message";
 
 interface TimelineEventProps {
   event: TimelineEventType;
@@ -112,6 +112,19 @@ export function TimelineEvent({ event, isLast = false }: TimelineEventProps) {
                 Received
               </Badge>
             )}
+            {/* Show message source for outbound messages */}
+            {event.message && !isInbound && event.message.source && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "text-xs",
+                  MESSAGE_SOURCE_COLORS[event.message.source].text,
+                  MESSAGE_SOURCE_COLORS[event.message.source].border
+                )}
+              >
+                {MESSAGE_SOURCE_DISPLAY[event.message.source]}
+              </Badge>
+            )}
             {event.message?.status === "scheduled" && event.message.scheduled_at && (
               <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
                 Scheduled for {formatFullTimestamp(event.message.scheduled_at)}
@@ -164,6 +177,19 @@ export function TimelineEvent({ event, isLast = false }: TimelineEventProps) {
                   <p>
                     <span className="font-medium">From:</span>{" "}
                     {event.message.from_identity.address}
+                  </p>
+                )}
+                {/* Show source in expanded details for outbound messages */}
+                {!isInbound && event.message.source && (
+                  <p>
+                    <span className="font-medium">Sent via:</span>{" "}
+                    {MESSAGE_SOURCE_DISPLAY[event.message.source]}
+                    {event.message.source === "workflow" && event.message.workflow_execution_id && (
+                      <span className="text-gray-400"> (Workflow Automation)</span>
+                    )}
+                    {event.message.source === "bulk" && (
+                      <span className="text-gray-400"> (Bulk Action)</span>
+                    )}
                   </p>
                 )}
                 {event.message.provider_error && (

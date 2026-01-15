@@ -172,6 +172,7 @@ export function normalizeMessage(message: Message): TimelineEvent {
       id: message.id,
       subject: message.subject,
       status: message.status,
+      source: message.source,
       channel: message.channel,
       provider_id: message.provider_id,
       provider_error: message.provider_error,

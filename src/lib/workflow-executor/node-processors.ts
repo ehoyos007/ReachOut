@@ -313,6 +313,7 @@ export const sendSmsProcessor: NodeProcessor = {
       direction: "outbound",
       body: messageBody,
       status: "queued",
+      source: "workflow",
       template_id: data.templateId,
       workflow_execution_id: execution.id,
     });
@@ -334,6 +335,7 @@ export const sendSmsProcessor: NodeProcessor = {
         direction: "outbound",
         body: messageBody,
         status: "sent",
+        source: "workflow",
         provider_id: result.sid,
         template_id: data.templateId,
         workflow_execution_id: execution.id,
@@ -448,6 +450,7 @@ export const sendEmailProcessor: NodeProcessor = {
       subject,
       body: messageBody,
       status: "queued",
+      source: "workflow",
       template_id: data.templateId,
       workflow_execution_id: execution.id,
     });

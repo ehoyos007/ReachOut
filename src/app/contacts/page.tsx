@@ -283,6 +283,7 @@ export default function ContactsPage() {
             contact_id: contactId,
             channel: "sms",
             body: message,
+            source: "bulk",
           }),
         });
 
@@ -322,6 +323,7 @@ export default function ContactsPage() {
             channel: "email",
             subject,
             body,
+            source: "bulk",
           }),
         });
 

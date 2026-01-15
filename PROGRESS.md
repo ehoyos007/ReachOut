@@ -4,6 +4,169 @@
 
 ---
 
+## January 15, 2026 — Session 30
+
+### Summary
+Added message source tracking to differentiate manual, bulk, and workflow-sent messages in the activity timeline.
+
+### Completed
+- [x] Created database migration to add `source` column to messages table
+- [x] Added `MessageSource` type with values: manual, bulk, workflow
+- [x] Updated Message types, DbMessage, SendMessageInput, CreateMessageInput
+- [x] Added display constants and color styling for message sources
+- [x] Updated send API to accept and store source parameter
+- [x] Updated workflow executor to pass `source: "workflow"` for automated messages
+- [x] Updated bulk SMS/email handlers to pass `source: "bulk"`
+- [x] Updated timeline types to include source in message details
+- [x] Updated TimelineEvent UI to show source badge on outbound messages
+- [x] Added expanded details showing "Sent via: Manual/Bulk/Workflow"
+- [x] Build passes successfully
+- [x] Migration 010 applied to Supabase
+
+### Files Changed
+- `supabase/migrations/010_add_message_source.sql` — New migration adding source column
+- `src/types/message.ts` — Added MessageSource type, source field, display constants
+- `src/types/timeline.ts` — Added source to message details in TimelineEvent
+- `src/lib/timeline-utils.ts` — Updated normalizeMessage to include source
+- `src/lib/supabase.ts` — Updated createMessage to store source
+- `src/app/api/messages/send/route.ts` — Accept and pass source parameter
+- `src/lib/workflow-executor/node-processors.ts` — Pass source: "workflow" for SMS/email nodes
+- `src/app/contacts/page.tsx` — Pass source: "bulk" in bulk handlers
+- `src/components/contacts/TimelineEvent.tsx` — Display source badge and details
+
+### Decisions Made
+- **Source badge for outbound only:** Inbound messages don't need source tracking as they're always from the contact
+- **Color coding:** Manual (gray), Bulk (amber), Workflow (indigo) for visual distinction
+- **Expanded details:** Show additional context like "(Workflow Automation)" or "(Bulk Action)"
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Consider filtering timeline by message source
+- [ ] Add source to scheduled messages display
+
+---
+
+## January 15, 2026 — Session 29
+
+### Summary
+Fixed Views sidebar layout alignment on Contacts page - sidebar now extends to full height.
+
+### Completed
+- [x] Diagnosed layout issue: Views sidebar not extending to full height of viewport
+- [x] Identified root cause: Contacts page used `h-[calc(100vh-4rem)]` but parent `main` already fills viewport
+- [x] Fixed contacts page container to use `h-full` instead of calculated height
+- [x] Fixed collapsed sidebar state missing `h-full` class
+- [x] Added `overflow-y-auto` to collapsed sidebar for scroll support
+- [x] Committed and pushed to main (25af195)
+
+### Files Changed
+- `src/app/contacts/page.tsx` — Changed `h-[calc(100vh-4rem)]` to `h-full` on main flex container
+- `src/components/contacts/SavedViewsSidebar.tsx` — Added `h-full overflow-y-auto` to collapsed sidebar state
+
+### Decisions Made
+- **h-full over calc:** The parent `main` element in AppShell already uses `flex-1 overflow-auto` to fill the viewport, so child containers should use `h-full` to inherit that height
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Consider adding dedicated bulk messaging API endpoint for better performance
+- [ ] Test bulk messaging with real contacts end-to-end
+
+---
+
+## January 15, 2026 — Session 28
+
+### Summary
+Fixed build error - added missing notification helper function imports.
+
+### Completed
+- [x] Fixed build error: `Cannot find name 'getNotificationTypeLabel'` in notifications page
+- [x] Fixed build error: `Cannot find name 'getNotificationIcon'` in NotificationsDropdown
+- [x] Both functions already existed in `/src/types/notification.ts`, just needed imports
+- [x] Build compiles successfully
+- [x] Committed and pushed to main (dea5871)
+
+### Files Changed
+- `src/app/notifications/page.tsx` — Added import for `getNotificationTypeLabel`
+- `src/components/notifications/NotificationsDropdown.tsx` — Added import for `getNotificationIcon`
+
+### Decisions Made
+- **Import existing functions:** Both helper functions were already defined in the types file, just needed to be imported where used
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Consider adding dedicated bulk messaging API endpoint for better performance
+- [ ] Test bulk messaging with real contacts end-to-end
+
+---
+
+## January 15, 2026 — Session 27
+
+### Summary
+Cleaned up 53 ESLint warnings - removed unused imports/variables, fixed useEffect dependency arrays, and resolved TypeScript interface warnings.
+
+### Completed
+- [x] Fixed 2 warnings in test files (display name, unused imports)
+- [x] Fixed 4 warnings in API routes (unused imports and variables)
+- [x] Fixed 12 warnings in page components (unused imports, useEffect deps)
+- [x] Fixed 10 warnings in regular components (unused imports, useEffect deps with useCallback)
+- [x] Fixed 12 warnings in lib files (unused imports, unused parameters)
+- [x] Fixed 13 useEffect dependency warnings across multiple files
+- [x] Fixed 1 empty interface warning in input.tsx
+- [x] Build compiles with zero ESLint warnings
+- [x] Committed and pushed to main (905af4c)
+
+### Files Changed
+- `src/__tests__/components/HomePage.test.tsx` — Added displayName to mock, removed unused mockFrom
+- `src/__tests__/lib/workflow-helpers.test.ts` — Removed unused TimeUnit import
+- `src/app/api/messages/send/route.ts` — Removed unused imports
+- `src/app/api/webhooks/sendgrid/inbound/route.ts` — Removed unused `to` variable
+- `src/app/api/webhooks/twilio/inbound/route.ts` — Removed unused `to` variable
+- `src/app/api/workflows/[id]/enroll/route.ts` — Removed unused import
+- `src/app/contacts/[id]/page.tsx` — Removed unused type imports
+- `src/app/contacts/fields/page.tsx` — Removed unused import, fixed useEffect deps
+- `src/app/contacts/import/page.tsx` — Removed unused imports and state variables
+- `src/app/contacts/page.tsx` — Removed unused variables, fixed useEffect deps
+- `src/app/contacts/tags/page.tsx` — Fixed useEffect deps
+- `src/app/notifications/page.tsx` — Removed unused imports
+- `src/app/templates/page.tsx` — Fixed useEffect deps
+- `src/app/workflows/page.tsx` — Removed unused imports
+- `src/components/contacts/ContactFilterBuilder.tsx` — Removed unused type imports and props
+- `src/components/contacts/SavedViewsSidebar.tsx` — Removed unused import
+- `src/components/contacts/ContactEnrollments.tsx` — Fixed useEffect deps with useCallback
+- `src/components/messaging/SenderSelector.tsx` — Fixed useEffect deps
+- `src/components/notifications/NotificationsDropdown.tsx` — Removed unused imports, fixed useEffect deps
+- `src/components/workflow/nodes/BaseNode.tsx` — Removed unused import
+- `src/components/workflow/EnrollContactsDialog.tsx` — Fixed useEffect deps with useCallback
+- `src/lib/store/enrollmentStore.ts` — Removed unused type import
+- `src/lib/store/notificationStore.ts` — Removed unused type imports
+- `src/lib/store/senderStore.ts` — Removed unused `get` parameter
+- `src/lib/store/settingsStore.ts` — Removed unused import
+- `src/lib/store/workflowStore.ts` — Removed unused import
+- `src/lib/supabase.ts` — Removed unused type imports and variables
+- `src/lib/workflow-executor/executor.ts` — Removed unused imports and variable
+- `src/lib/workflow-executor/node-processors.ts` — Removed unused type imports
+- `src/components/ui/input.tsx` — Changed empty interface to type alias
+
+### Decisions Made
+- **useCallback for useEffect deps:** Wrapped functions used in useEffect dependencies with useCallback to ensure stable references
+- **Type alias over empty interface:** Changed `interface InputProps extends ...` to `type InputProps = ...` to satisfy ESLint rule
+- **Remove vs disable:** Chose to remove unused code rather than disable ESLint warnings
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Consider adding dedicated bulk messaging API endpoint for better performance
+- [ ] Test bulk messaging with real contacts end-to-end
+
+---
+
 ## January 15, 2026 — Session 26
 
 ### Summary
@@ -1324,4 +1487,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 26)
+**Last Updated:** January 15, 2026 (Session 30)

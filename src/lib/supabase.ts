@@ -879,6 +879,7 @@ export async function createMessage(input: CreateMessageInput): Promise<Message>
       subject: input.subject || null,
       body: input.body,
       status: input.status || "queued",
+      source: input.source || "manual",
       provider_id: input.provider_id || null,
       provider_error: input.provider_error || null,
       template_id: input.template_id || null,

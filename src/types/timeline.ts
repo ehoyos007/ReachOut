@@ -6,7 +6,7 @@
  * then merged and sorted chronologically.
  */
 
-import { MessageFromIdentity, MessageStatus } from "./message";
+import { MessageFromIdentity, MessageStatus, MessageSource } from "./message";
 
 // Event types that come from the contact_events table
 export type ContactEventType =
@@ -95,6 +95,7 @@ export interface TimelineEvent {
     id: string;
     subject: string | null;
     status: MessageStatus;
+    source: MessageSource;
     channel: "sms" | "email";
     provider_id: string | null;
     provider_error: string | null;

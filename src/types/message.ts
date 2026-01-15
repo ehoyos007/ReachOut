@@ -4,6 +4,7 @@
 
 export type MessageChannel = "sms" | "email";
 export type MessageDirection = "inbound" | "outbound";
+export type MessageSource = "manual" | "bulk" | "workflow";
 export type MessageStatus =
   | "scheduled"
   | "queued"
@@ -30,6 +31,7 @@ export interface Message {
   subject: string | null; // For email only
   body: string;
   status: MessageStatus;
+  source: MessageSource; // How the message was sent: manual, bulk, or workflow
   provider_id: string | null; // Twilio SID or SendGrid message ID
   provider_error: string | null;
   template_id: string | null;
@@ -55,6 +57,7 @@ export interface DbMessage {
   subject: string | null;
   body: string;
   status: string;
+  source: string;
   provider_id: string | null;
   provider_error: string | null;
   template_id: string | null;
@@ -94,6 +97,7 @@ export interface SendMessageInput {
   template_id?: string | null;
   scheduled_at?: string | null; // ISO timestamp for scheduling
   from_identity_id?: string | null; // ID of sender identity to use
+  source?: MessageSource; // How the message is being sent (defaults to 'manual')
 }
 
 export interface CreateMessageInput {
@@ -103,6 +107,7 @@ export interface CreateMessageInput {
   subject?: string | null;
   body: string;
   status?: MessageStatus;
+  source?: MessageSource; // Defaults to 'manual'
   provider_id?: string | null;
   provider_error?: string | null;
   template_id?: string | null;
@@ -187,6 +192,21 @@ export const MESSAGE_DIRECTION_DISPLAY: Record<MessageDirection, string> = {
 export const MESSAGE_CHANNEL_DISPLAY: Record<MessageChannel, string> = {
   sms: "SMS",
   email: "Email",
+};
+
+export const MESSAGE_SOURCE_DISPLAY: Record<MessageSource, string> = {
+  manual: "Manual",
+  bulk: "Bulk",
+  workflow: "Workflow",
+};
+
+export const MESSAGE_SOURCE_COLORS: Record<
+  MessageSource,
+  { bg: string; text: string; border: string }
+> = {
+  manual: { bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-300" },
+  bulk: { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-300" },
+  workflow: { bg: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-300" },
 };
 
 // =============================================================================
