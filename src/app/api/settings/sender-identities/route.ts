@@ -6,6 +6,8 @@ import {
   addSenderPhone,
 } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/settings/sender-identities - Get all sender identities
 export async function GET() {
   try {

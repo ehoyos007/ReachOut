@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { testSendGridConnection } from "@/lib/sendgrid";
 import type { SendGridSettings } from "@/types/message";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const settings: SendGridSettings = await request.json();

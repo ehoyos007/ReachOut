@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getNotifications, getUnreadNotificationCount } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 /**
  * GET /api/notifications
  * Fetch notifications with optional filters

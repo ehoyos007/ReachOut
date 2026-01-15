@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getScheduledMessages } from "@/lib/supabase";
 import type { MessageChannel } from "@/types/message";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/messages/scheduled - List scheduled messages
 export async function GET(request: NextRequest) {
   try {

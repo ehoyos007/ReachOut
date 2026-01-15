@@ -3,6 +3,8 @@ import { getMessageByProviderId, updateMessage } from "@/lib/supabase";
 import { mapTwilioStatus } from "@/types/message";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Verify Twilio webhook signature
  */

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { markNotificationAsRead, getNotification } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }

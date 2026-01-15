@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { testTwilioConnection } from "@/lib/twilio";
 import type { TwilioSettings } from "@/types/message";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const settings: TwilioSettings = await request.json();

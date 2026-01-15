@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getContactByEmail, createMessage, createNotification } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Extract email address from "Name <email@example.com>" format
  */

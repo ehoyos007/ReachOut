@@ -6,6 +6,8 @@ import {
   removeSenderPhone,
 } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 // PUT /api/settings/sender-identities/[id] - Update sender identity
 export async function PUT(
   request: NextRequest,

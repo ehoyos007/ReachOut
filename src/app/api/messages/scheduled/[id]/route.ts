@@ -5,6 +5,8 @@ import {
   updateScheduledMessage,
 } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/messages/scheduled/[id] - Get single scheduled message
 export async function GET(
   request: NextRequest,

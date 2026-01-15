@@ -3,6 +3,8 @@ import { getContactByPhone, createMessage, createNotification } from "@/lib/supa
 import { normalizePhoneNumber } from "@/types/message";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Verify Twilio webhook signature
  * https://www.twilio.com/docs/usage/security#validating-requests

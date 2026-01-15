@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { processExecution, type ExecutionResult } from "@/lib/workflow-executor";
 import { getDueExecutions } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 // Maximum executions to process per cron run
 const MAX_EXECUTIONS_PER_RUN = 100;
 

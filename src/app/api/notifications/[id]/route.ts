@@ -4,6 +4,8 @@ import {
   deleteNotification as deleteNotificationDb,
 } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }

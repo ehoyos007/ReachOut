@@ -5,6 +5,8 @@ import {
   getContact,
   getSetting,
 } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 import { sendSms } from "@/lib/twilio";
 import { sendEmail } from "@/lib/sendgrid";
 import type { Message, TwilioSettings, SendGridSettings } from "@/types/message";

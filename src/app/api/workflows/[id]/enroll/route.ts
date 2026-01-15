@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { enrollContacts } from "@/lib/workflow-executor";
 import { getWorkflow, getContact } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 interface EnrollRequest {
   contact_ids: string[];
   skip_duplicates?: boolean;

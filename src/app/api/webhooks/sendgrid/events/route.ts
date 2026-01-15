@@ -3,6 +3,8 @@ import { getMessageByProviderId, updateMessage } from "@/lib/supabase";
 import { mapSendGridStatus, type MessageStatus } from "@/types/message";
 import crypto from "crypto";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Verify SendGrid webhook signature
  * https://docs.sendgrid.com/for-developers/tracking-events/getting-started-event-webhook-security-features

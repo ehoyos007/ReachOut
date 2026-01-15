@@ -8,6 +8,8 @@ import {
   getSenderEmails,
   getSenderPhones,
 } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 import { sendSms } from "@/lib/twilio";
 import { sendEmail } from "@/lib/sendgrid";
 import type {
