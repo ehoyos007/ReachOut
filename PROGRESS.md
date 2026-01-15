@@ -4,6 +4,36 @@
 
 ---
 
+## January 15, 2026 — Session 26
+
+### Summary
+Fixed bulk SMS and email sending - handlers were incorrectly passing array of contact IDs to single-message API endpoint.
+
+### Completed
+- [x] Diagnosed 400 Bad Request error in bulk messaging
+- [x] Identified root cause: API expects `contact_id` (single) but handlers sent `contactIds` (array)
+- [x] Identified secondary issue: SMS handler sent `message` instead of `body`
+- [x] Fixed `handleBulkSms` to iterate through contacts and send individual messages
+- [x] Fixed `handleBulkEmail` to iterate through contacts and send individual emails
+- [x] Both handlers now track sent/failed counts per message with individual error logging
+- [x] Committed and pushed fix (a82150e)
+
+### Files Changed
+- `src/app/contacts/page.tsx` — Fixed handleBulkSms and handleBulkEmail to use correct API parameters
+
+### Decisions Made
+- **Individual messages over bulk endpoint:** Sending messages one-by-one provides better error handling - if one fails, others still get sent
+- **Correct parameter names:** Used `contact_id` (single ID) and `body` (message content) to match API expectations
+
+### Blockers / Issues Encountered
+- **API parameter mismatch:** The `/api/messages/send` endpoint only handles single messages, but bulk handlers were sending arrays
+
+### Next Steps
+- [ ] Consider adding a dedicated bulk messaging API endpoint for better performance
+- [ ] Test bulk messaging with real contacts end-to-end
+
+---
+
 ## January 15, 2026 — Session 25
 
 ### Summary
@@ -1294,4 +1324,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 25)
+**Last Updated:** January 15, 2026 (Session 26)
