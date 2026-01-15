@@ -4,6 +4,39 @@
 
 ---
 
+## January 15, 2026 — Session 31
+
+### Summary
+Fixed dynamic placeholder substitution bug - placeholders like {{first_name}} were being sent literally instead of replaced with contact values.
+
+### Completed
+- [x] Diagnosed issue: bulk SMS/Email sending with dynamic placeholders showed raw `{{first_name}}` in messages
+- [x] Traced flow from BulkSmsModal/BulkEmailModal → contacts page handlers → /api/messages/send endpoint
+- [x] Identified root cause: API endpoint had contact data but never resolved placeholders
+- [x] Added imports for `replacePlaceholders` and `contactToPlaceholderValues` from template types
+- [x] Added placeholder resolution logic after fetching contact data
+- [x] Updated message record creation to store resolved content
+- [x] Updated Twilio SMS sending to use resolved body
+- [x] Updated SendGrid email sending to use resolved subject and body
+- [x] Build passes successfully
+- [x] Committed fix (f7ce724)
+
+### Files Changed
+- `src/app/api/messages/send/route.ts` — Added placeholder resolution before sending messages (+12 lines, -3 lines)
+
+### Decisions Made
+- **Resolve at API level:** Placeholder resolution happens in the send API rather than the frontend, ensuring all message sources (bulk, manual, scheduled) get proper substitution
+- **Store resolved content:** Message records store the personalized content, not the raw template
+
+### Blockers / Issues Encountered
+- **Preview worked, send didn't:** The bulk modals had `resolvePlaceholders()` functions for preview display but weren't applying them when actually sending
+
+### Next Steps
+- [ ] Test bulk messaging with real contacts to verify fix
+- [ ] Consider adding placeholder resolution to scheduled message processing
+
+---
+
 ## January 15, 2026 — Session 30
 
 ### Summary
@@ -1487,4 +1520,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 30)
+**Last Updated:** January 15, 2026 (Session 31)
