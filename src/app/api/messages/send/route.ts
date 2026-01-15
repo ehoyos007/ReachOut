@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createMessage, updateMessage, getContact, getSetting } from "@/lib/supabase";
+import {
+  createMessage,
+  updateMessage,
+  getContact,
+  getSetting,
+  getSenderIdentity,
+  getSenderEmails,
+  getSenderPhones,
+} from "@/lib/supabase";
 import { sendSms } from "@/lib/twilio";
 import { sendEmail } from "@/lib/sendgrid";
-import type { SendMessageInput, CreateMessageInput, TwilioSettings, SendGridSettings } from "@/types/message";
+import type {
+  SendMessageInput,
+  CreateMessageInput,
+  TwilioSettings,
+  SendGridSettings,
+  MessageFromIdentity,
+} from "@/types/message";
+import type { SenderEmail, SenderPhone } from "@/types/sender";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,18 +63,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create message record with queued status
+    // Determine sender identity
+    let fromIdentity: MessageFromIdentity | null = null;
+    if (input.from_identity_id) {
+      const identity = await getSenderIdentity(input.channel, input.from_identity_id);
+      if (identity) {
+        fromIdentity = {
+          type: input.channel,
+          identity_id: identity.id,
+          address: input.channel === "sms"
+            ? (identity as SenderPhone).phone
+            : (identity as SenderEmail).email,
+        };
+      }
+    }
+
+    // Check if this is a scheduled message (scheduled_at is in the future)
+    const isScheduled =
+      input.scheduled_at && new Date(input.scheduled_at) > new Date();
+
+    // Create message record
     const messageInput: CreateMessageInput = {
       contact_id: input.contact_id,
       channel: input.channel,
       direction: "outbound",
       subject: input.subject || null,
       body: input.body,
-      status: "queued",
+      status: isScheduled ? "scheduled" : "queued",
       template_id: input.template_id || null,
+      scheduled_at: input.scheduled_at || null,
+      from_identity: fromIdentity,
     };
 
     const message = await createMessage(messageInput);
+
+    // If scheduled for future, return without sending
+    if (isScheduled) {
+      return NextResponse.json({
+        success: true,
+        scheduled: true,
+        message,
+      });
+    }
 
     // Send via appropriate provider
     if (input.channel === "sms") {

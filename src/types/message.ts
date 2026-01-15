@@ -5,12 +5,22 @@
 export type MessageChannel = "sms" | "email";
 export type MessageDirection = "inbound" | "outbound";
 export type MessageStatus =
+  | "scheduled"
   | "queued"
   | "sending"
   | "sent"
   | "delivered"
   | "failed"
   | "bounced";
+
+/**
+ * Sender identity reference stored on a message
+ */
+export interface MessageFromIdentity {
+  type: "sms" | "email";
+  identity_id: string;
+  address: string; // The actual phone/email used
+}
 
 export interface Message {
   id: string;
@@ -24,6 +34,8 @@ export interface Message {
   provider_error: string | null;
   template_id: string | null;
   workflow_execution_id: string | null;
+  scheduled_at: string | null; // ISO timestamp for scheduled messages
+  from_identity: MessageFromIdentity | null; // Sender identity used
   sent_at: string | null;
   delivered_at: string | null;
   failed_at: string | null;
@@ -47,6 +59,8 @@ export interface DbMessage {
   provider_error: string | null;
   template_id: string | null;
   workflow_execution_id: string | null;
+  scheduled_at: string | null;
+  from_identity: MessageFromIdentity | null;
   sent_at: string | null;
   delivered_at: string | null;
   failed_at: string | null;
@@ -78,6 +92,8 @@ export interface SendMessageInput {
   subject?: string | null; // Required for email
   body: string;
   template_id?: string | null;
+  scheduled_at?: string | null; // ISO timestamp for scheduling
+  from_identity_id?: string | null; // ID of sender identity to use
 }
 
 export interface CreateMessageInput {
@@ -91,6 +107,8 @@ export interface CreateMessageInput {
   provider_error?: string | null;
   template_id?: string | null;
   workflow_execution_id?: string | null;
+  scheduled_at?: string | null;
+  from_identity?: MessageFromIdentity | null;
 }
 
 export interface UpdateMessageInput {
@@ -116,6 +134,13 @@ export interface MessageFilters {
   dateTo?: string;
 }
 
+export interface ScheduledMessageFilters {
+  contact_id?: string;
+  channel?: MessageChannel;
+  scheduled_after?: string;
+  scheduled_before?: string;
+}
+
 // =============================================================================
 // Pagination Types
 // =============================================================================
@@ -132,6 +157,7 @@ export interface MessagePagination {
 // =============================================================================
 
 export const MESSAGE_STATUS_DISPLAY: Record<MessageStatus, string> = {
+  scheduled: "Scheduled",
   queued: "Queued",
   sending: "Sending",
   sent: "Sent",
@@ -144,6 +170,7 @@ export const MESSAGE_STATUS_COLORS: Record<
   MessageStatus,
   { bg: string; text: string }
 > = {
+  scheduled: { bg: "bg-purple-100", text: "text-purple-700" },
   queued: { bg: "bg-gray-100", text: "text-gray-700" },
   sending: { bg: "bg-blue-100", text: "text-blue-700" },
   sent: { bg: "bg-blue-100", text: "text-blue-700" },

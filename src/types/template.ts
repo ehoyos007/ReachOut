@@ -219,6 +219,50 @@ export function getSamplePlaceholderValues(): Record<string, string> {
 }
 
 /**
+ * Get all available placeholders including custom fields
+ */
+export function getAllPlaceholders(customFields?: Array<{ id: string; name: string; field_type: string }>): {
+  standard: TemplatePlaceholder[];
+  custom: TemplatePlaceholder[];
+} {
+  const standard = STANDARD_PLACEHOLDERS;
+
+  const custom: TemplatePlaceholder[] = (customFields || []).map((field) => ({
+    key: `custom_${field.name.toLowerCase().replace(/\s+/g, "_")}`,
+    label: field.name,
+    description: `Custom field: ${field.name}`,
+    example: field.field_type === "number" ? "123" : field.field_type === "date" ? "2024-01-15" : "Value",
+  }));
+
+  return { standard, custom };
+}
+
+/**
+ * Convert contact with custom fields to placeholder values
+ */
+export function contactWithCustomFieldsToPlaceholderValues(contact: {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  custom_fields?: Array<{ field_name?: string; value: string | null }>;
+}): Record<string, string> {
+  const baseValues = contactToPlaceholderValues(contact);
+
+  // Add custom field values
+  if (contact.custom_fields) {
+    for (const field of contact.custom_fields) {
+      if (field.field_name) {
+        const key = `custom_${field.field_name.toLowerCase().replace(/\s+/g, "_")}`;
+        baseValues[key] = field.value || "";
+      }
+    }
+  }
+
+  return baseValues;
+}
+
+/**
  * Convert contact data to placeholder values
  */
 export function contactToPlaceholderValues(contact: {
