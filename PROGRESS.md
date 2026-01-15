@@ -4,6 +4,47 @@
 
 ---
 
+## January 15, 2026 — Session 34
+
+### Summary
+Completed Sent Messages Dashboard Phase 2-6 - Added date range picker, column sorting, resend action, full message modal, and contact tags display.
+
+### Completed
+- [x] Date range picker filter with popover containing from/to date inputs
+- [x] Column header sorting for Type, Status, and Sent columns (toggle desc/asc/none)
+- [x] Resend message action - navigates to contact page with pre-filled compose modal
+- [x] Full message modal for viewing long messages (>500 characters)
+- [x] Contact tags display with color-coded badges in expanded row view
+- [x] Extended supabase query to include contact tags via nested join
+- [x] Added sortBy/sortOrder parameters to API and supabase function
+- [x] Updated ComposeMessageModal to accept initialBody/initialSubject props
+- [x] Updated ContactTimeline to support initial compose state from props
+- [x] Updated contact detail page to read URL params for resend feature
+
+### Files Changed
+- `src/lib/supabase.ts` — Added sorting support, contact tags to sent messages query, SentMessagesSortField/SentMessagesSortOrder types
+- `src/app/api/messages/sent/route.ts` — Added sortBy/sortOrder query parameters
+- `src/app/messages/sent/page.tsx` — Full rewrite: date range picker, sortable columns, resend button, full message modal, contact tags
+- `src/components/messaging/ComposeMessageModal.tsx` — Added initialBody/initialSubject props for resend feature
+- `src/components/contacts/ContactTimeline.tsx` — Added initial compose state props (initialComposeOpen, initialComposeChannel, etc.)
+- `src/app/contacts/[id]/page.tsx` — Added URL param handling for compose modal (resend feature)
+- `TASKS.md` — Marked Sent Messages Dashboard feature as complete
+
+### Decisions Made
+- **Sort toggle behavior:** Click cycles through desc → asc → no sort (clear)
+- **Resend via URL params:** Uses query params (compose, channel, body, subject) to pass data to contact page
+- **Long message threshold:** 500 characters triggers "View Full" button and truncation
+- **Tag display:** Uses nested Supabase join (contact_tags → tags) with color-coded badges
+
+### Blockers / Issues Encountered
+- None - all features implemented smoothly
+
+### Next Steps
+- [ ] Test all features end-to-end
+- [ ] Consider adding source filter (manual/bulk/workflow)
+
+---
+
 ## January 15, 2026 — Session 33
 
 ### Summary
