@@ -12,6 +12,12 @@ import {
   Phone,
   Mail,
   AlertCircle,
+  Plus,
+  Pencil,
+  Trash2,
+  Star,
+  Users,
+  BadgeCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,19 +31,35 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { useSenderStore } from "@/lib/store/senderStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import type { SettingKey, TestResult } from "@/types/settings";
 import {
   SETTINGS_CONFIG,
   getProviderSettings,
   validateSettingValue,
-  maskSecretValue,
 } from "@/types/settings";
+import type {
+  SenderEmail,
+  SenderPhone,
+  CreateSenderEmailInput,
+  CreateSenderPhoneInput,
+} from "@/types/sender";
 
 export default function SettingsPage() {
   const [supabaseReady, setSupabaseReady] = useState(true);
-  const [activeTab, setActiveTab] = useState<"twilio" | "sendgrid">("twilio");
+  const [activeTab, setActiveTab] = useState<"twilio" | "sendgrid" | "senders">("twilio");
 
   // Form state for each setting
   const [formValues, setFormValues] = useState<Record<SettingKey, string>>(
@@ -47,7 +69,29 @@ export default function SettingsPage() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
-  // Store
+  // Sender identity dialog state
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [editingEmail, setEditingEmail] = useState<SenderEmail | null>(null);
+  const [editingPhone, setEditingPhone] = useState<SenderPhone | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "email" | "phone"; id: string } | null>(null);
+
+  // Email form state
+  const [emailForm, setEmailForm] = useState<CreateSenderEmailInput>({
+    email: "",
+    name: "",
+    is_default: false,
+  });
+
+  // Phone form state
+  const [phoneForm, setPhoneForm] = useState<CreateSenderPhoneInput>({
+    phone: "",
+    label: "",
+    is_default: false,
+  });
+
+  // Settings store
   const {
     settingsMap,
     isTwilioConfigured,
@@ -63,8 +107,24 @@ export default function SettingsPage() {
     testTwilioConnection,
     testSendGridConnection,
     clearTestResults,
-    clearError,
   } = useSettingsStore();
+
+  // Sender store
+  const {
+    emails: senderEmails,
+    phones: senderPhones,
+    isLoading: sendersLoading,
+    isSaving: sendersSaving,
+    isDeleting: sendersDeleting,
+    error: sendersError,
+    fetchSenders,
+    addEmail,
+    addPhone,
+    updateEmail,
+    updatePhone,
+    removeEmail,
+    removePhone,
+  } = useSenderStore();
 
   // Check Supabase configuration
   useEffect(() => {
@@ -73,7 +133,8 @@ export default function SettingsPage() {
       return;
     }
     fetchSettings();
-  }, [fetchSettings]);
+    fetchSenders();
+  }, [fetchSettings, fetchSenders]);
 
   // Sync form values with store
   useEffect(() => {
@@ -152,6 +213,94 @@ export default function SettingsPage() {
     } else {
       await testSendGridConnection();
     }
+  };
+
+  // =============================================================================
+  // Sender Identity Handlers
+  // =============================================================================
+
+  const openEmailDialog = (email?: SenderEmail) => {
+    if (email) {
+      setEditingEmail(email);
+      setEmailForm({
+        email: email.email,
+        name: email.name,
+        is_default: email.is_default,
+      });
+    } else {
+      setEditingEmail(null);
+      setEmailForm({ email: "", name: "", is_default: false });
+    }
+    setEmailDialogOpen(true);
+  };
+
+  const openPhoneDialog = (phone?: SenderPhone) => {
+    if (phone) {
+      setEditingPhone(phone);
+      setPhoneForm({
+        phone: phone.phone,
+        label: phone.label,
+        is_default: phone.is_default,
+      });
+    } else {
+      setEditingPhone(null);
+      setPhoneForm({ phone: "", label: "", is_default: false });
+    }
+    setPhoneDialogOpen(true);
+  };
+
+  const handleSaveEmail = async () => {
+    if (!emailForm.email.trim()) return;
+
+    if (editingEmail) {
+      await updateEmail({
+        id: editingEmail.id,
+        email: emailForm.email,
+        name: emailForm.name,
+        is_default: emailForm.is_default,
+      });
+    } else {
+      await addEmail(emailForm);
+    }
+
+    setEmailDialogOpen(false);
+    setEditingEmail(null);
+  };
+
+  const handleSavePhone = async () => {
+    if (!phoneForm.phone.trim()) return;
+
+    if (editingPhone) {
+      await updatePhone({
+        id: editingPhone.id,
+        phone: phoneForm.phone,
+        label: phoneForm.label,
+        is_default: phoneForm.is_default,
+      });
+    } else {
+      await addPhone(phoneForm);
+    }
+
+    setPhoneDialogOpen(false);
+    setEditingPhone(null);
+  };
+
+  const confirmDelete = (type: "email" | "phone", id: string) => {
+    setItemToDelete({ type, id });
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+
+    if (itemToDelete.type === "email") {
+      await removeEmail(itemToDelete.id);
+    } else {
+      await removePhone(itemToDelete.id);
+    }
+
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
   };
 
   const renderTestResult = (result: TestResult | null) => {
@@ -263,8 +412,8 @@ export default function SettingsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "twilio" | "sendgrid")}>
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "twilio" | "sendgrid" | "senders")}>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="twilio" className="flex items-center gap-2">
               <Phone className="h-4 w-4" />
               Twilio (SMS)
@@ -277,6 +426,15 @@ export default function SettingsPage() {
               SendGrid (Email)
               {isSendGridConfigured && (
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="senders" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Sender Identities
+              {(senderEmails.length > 0 || senderPhones.length > 0) && (
+                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                  {senderEmails.length + senderPhones.length}
+                </Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -412,8 +570,342 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Sender Identities Tab */}
+          <TabsContent value="senders">
+            <div className="space-y-6">
+              {/* Sender Error Alert */}
+              {sendersError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Error</AlertTitle>
+                  <AlertDescription>{sendersError}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Email Senders Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5" />
+                        Email Senders
+                      </CardTitle>
+                      <CardDescription>
+                        Email addresses that will appear as the sender for outbound emails.
+                      </CardDescription>
+                    </div>
+                    <Button onClick={() => openEmailDialog()} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Email
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {sendersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : senderEmails.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Mail className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No email senders configured</p>
+                      <p className="text-sm">Add an email address to send emails from.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {senderEmails.map((sender) => (
+                        <div
+                          key={sender.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                              <Mail className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{sender.name || sender.email}</span>
+                                {sender.is_default && (
+                                  <Badge variant="secondary" className="gap-1">
+                                    <Star className="h-3 w-3" />
+                                    Default
+                                  </Badge>
+                                )}
+                                {sender.verified && (
+                                  <Badge variant="outline" className="gap-1 text-green-600 border-green-600">
+                                    <BadgeCheck className="h-3 w-3" />
+                                    Verified
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{sender.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEmailDialog(sender)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete("email", sender.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Phone Senders Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Phone className="h-5 w-5" />
+                        Phone Numbers
+                      </CardTitle>
+                      <CardDescription>
+                        Phone numbers that will appear as the sender for outbound SMS messages.
+                      </CardDescription>
+                    </div>
+                    <Button onClick={() => openPhoneDialog()} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Phone
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {sendersLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : senderPhones.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Phone className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No phone numbers configured</p>
+                      <p className="text-sm">Add a phone number to send SMS messages from.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {senderPhones.map((sender) => (
+                        <div
+                          key={sender.id}
+                          className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center h-10 w-10 rounded-full bg-green-500/10">
+                              <Phone className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{sender.label || sender.phone}</span>
+                                {sender.is_default && (
+                                  <Badge variant="secondary" className="gap-1">
+                                    <Star className="h-3 w-3" />
+                                    Default
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground">{sender.phone}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openPhoneDialog(sender)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => confirmDelete("phone", sender.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Info Alert */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>About Sender Identities</AlertTitle>
+                <AlertDescription>
+                  Sender identities determine the &quot;from&quot; address when sending messages.
+                  The default sender will be used when composing new messages unless you select
+                  a different one.
+                </AlertDescription>
+              </Alert>
+            </div>
+          </TabsContent>
         </Tabs>
       )}
+
+      {/* Email Sender Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingEmail ? "Edit Email Sender" : "Add Email Sender"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingEmail
+                ? "Update the email sender details."
+                : "Add a new email address to send emails from."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sender-email">Email Address *</Label>
+              <Input
+                id="sender-email"
+                type="email"
+                placeholder="hello@example.com"
+                value={emailForm.email}
+                onChange={(e) => setEmailForm({ ...emailForm, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sender-name">Display Name</Label>
+              <Input
+                id="sender-name"
+                placeholder="Company Name"
+                value={emailForm.name}
+                onChange={(e) => setEmailForm({ ...emailForm, name: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                The name that will appear in the &quot;From&quot; field (e.g., &quot;Company Name&quot; &lt;hello@example.com&gt;)
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="email-default"
+                checked={emailForm.is_default}
+                onCheckedChange={(checked) =>
+                  setEmailForm({ ...emailForm, is_default: checked === true })
+                }
+              />
+              <Label htmlFor="email-default" className="text-sm font-normal">
+                Set as default email sender
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEmail} disabled={sendersSaving || !emailForm.email.trim()}>
+              {sendersSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingEmail ? "Save Changes" : "Add Email"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phone Sender Dialog */}
+      <Dialog open={phoneDialogOpen} onOpenChange={setPhoneDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingPhone ? "Edit Phone Number" : "Add Phone Number"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingPhone
+                ? "Update the phone number details."
+                : "Add a new phone number to send SMS messages from."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="sender-phone">Phone Number *</Label>
+              <Input
+                id="sender-phone"
+                type="tel"
+                placeholder="+1 555 123 4567"
+                value={phoneForm.phone}
+                onChange={(e) => setPhoneForm({ ...phoneForm, phone: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                Use the format provided by Twilio (e.g., +15551234567)
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone-label">Label</Label>
+              <Input
+                id="phone-label"
+                placeholder="Main Line, Support, etc."
+                value={phoneForm.label}
+                onChange={(e) => setPhoneForm({ ...phoneForm, label: e.target.value })}
+              />
+              <p className="text-sm text-muted-foreground">
+                A friendly name to identify this phone number
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="phone-default"
+                checked={phoneForm.is_default}
+                onCheckedChange={(checked) =>
+                  setPhoneForm({ ...phoneForm, is_default: checked === true })
+                }
+              />
+              <Label htmlFor="phone-default" className="text-sm font-normal">
+                Set as default phone number
+              </Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPhoneDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSavePhone} disabled={sendersSaving || !phoneForm.phone.trim()}>
+              {sendersSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {editingPhone ? "Save Changes" : "Add Phone"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Sender Identity</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {itemToDelete?.type === "email" ? "email sender" : "phone number"}?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={sendersDeleting}>
+              {sendersDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Webhook Info Card */}
       <Card className="mt-8">

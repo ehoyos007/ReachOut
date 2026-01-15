@@ -4,6 +4,85 @@
 
 ---
 
+## January 15, 2026 — Session 21
+
+### Summary
+Added Sender Identities UI to Settings page - Complete management interface for email and phone sender identities.
+
+### Completed
+- [x] Added third tab "Sender Identities" to Settings page
+- [x] Built Email Senders card with list view, add/edit/delete functionality
+- [x] Built Phone Numbers card with list view, add/edit/delete functionality
+- [x] Created dialogs for creating and editing both email and phone senders
+- [x] Added visual badges for default sender (star) and verified emails (checkmark)
+- [x] Implemented delete confirmation dialog
+- [x] Added empty states for when no senders are configured
+- [x] Added info alert explaining sender identity purpose
+- [x] Cleaned up unused imports to eliminate lint warnings
+- [x] Build compiles successfully with no errors
+
+### Files Changed
+- `src/app/settings/page.tsx` — Major update: Added Sender Identities tab with full CRUD UI (+250 lines)
+
+### Decisions Made
+- **Three-tab layout:** Added Sender Identities as third tab alongside Twilio and SendGrid configuration
+- **Card-based layout:** Separate cards for email senders and phone numbers for clear organization
+- **Badge count:** Shows total sender count in tab header for quick reference
+- **Inline delete:** Delete button on each row with confirmation dialog
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Test scheduling flow end-to-end
+- [ ] Phase 2: Conditional Tagging in Import Wizard (future enhancement)
+
+---
+
+## January 15, 2026 — Session 20
+
+### Summary
+Fixed Vercel build error - Added dynamic route config to all API routes to prevent static rendering errors.
+
+### Completed
+- [x] Diagnosed Vercel build error: `Route /api/notifications couldn't be rendered statically because it used request.url`
+- [x] Added `export const dynamic = "force-dynamic";` to all 18 API route files
+- [x] Verified build passes locally with `npm run build`
+- [x] Committed and pushed to main (commit `16d5288`)
+
+### Files Changed
+- `src/app/api/notifications/route.ts` — Added dynamic export
+- `src/app/api/notifications/[id]/route.ts` — Added dynamic export
+- `src/app/api/notifications/[id]/read/route.ts` — Added dynamic export
+- `src/app/api/notifications/read-all/route.ts` — Added dynamic export
+- `src/app/api/messages/send/route.ts` — Added dynamic export
+- `src/app/api/messages/scheduled/route.ts` — Added dynamic export
+- `src/app/api/messages/scheduled/[id]/route.ts` — Added dynamic export
+- `src/app/api/settings/test-twilio/route.ts` — Added dynamic export
+- `src/app/api/settings/test-sendgrid/route.ts` — Added dynamic export
+- `src/app/api/settings/sender-identities/route.ts` — Added dynamic export
+- `src/app/api/settings/sender-identities/[id]/route.ts` — Added dynamic export
+- `src/app/api/workflows/[id]/enroll/route.ts` — Added dynamic export
+- `src/app/api/cron/process-workflows/route.ts` — Added dynamic export
+- `src/app/api/cron/process-scheduled-messages/route.ts` — Added dynamic export
+- `src/app/api/webhooks/twilio/status/route.ts` — Added dynamic export
+- `src/app/api/webhooks/twilio/inbound/route.ts` — Added dynamic export
+- `src/app/api/webhooks/sendgrid/events/route.ts` — Added dynamic export
+- `src/app/api/webhooks/sendgrid/inbound/route.ts` — Added dynamic export
+
+### Decisions Made
+- **Applied to all API routes:** Added dynamic config to all 18 routes proactively to prevent similar errors from other routes using `request.headers`, `searchParams`, etc.
+
+### Blockers / Issues Encountered
+- **Vercel static rendering:** Next.js App Router attempts static rendering by default; routes using `request.url`, `headers()`, `cookies()`, or `searchParams` need explicit opt-out
+
+### Next Steps
+- [ ] Add sender identities UI in Settings page
+- [ ] Test scheduling flow end-to-end
+- [ ] Phase 2: Conditional Tagging in Import Wizard (future enhancement)
+
+---
+
 ## January 14, 2026 — Session 19
 
 ### Summary
@@ -1022,4 +1101,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 19)
+**Last Updated:** January 15, 2026 (Session 21)

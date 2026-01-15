@@ -14,7 +14,6 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 ## To Do
 
 ### Scheduling Features (Post-MVP)
-- [ ] Add sender identities UI in Settings page
 - [ ] Test scheduling flow end-to-end
 
 ### Feature: Bulk Tag Assignment in Import Wizard
@@ -32,6 +31,16 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 ---
 
 ## Done
+
+### Sender Identities UI (Completed Jan 15, 2026)
+- [x] Added Sender Identities tab to Settings page (third tab)
+- [x] Email senders list with add/edit/delete functionality
+- [x] Phone numbers list with add/edit/delete functionality
+- [x] Dialogs for creating and editing sender identities
+- [x] Default sender designation with star badge
+- [x] Verified email badge display
+- [x] Delete confirmation dialog
+- [x] Empty states for when no senders configured
 
 ### Bulk Tag Assignment - Phase 1 (Completed Jan 14, 2026)
 - [x] Add tag state to import wizard (selectedTagIds, fetch tags on mount)
@@ -285,4 +294,4 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 19)
+**Last Updated:** January 15, 2026 (Session 21)
