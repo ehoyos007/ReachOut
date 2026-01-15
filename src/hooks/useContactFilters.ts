@@ -7,6 +7,7 @@ import type {
   FilterGroup,
   ContactWithRelations,
   FilterFieldType,
+  FilterOperator,
   Contact,
 } from "@/types/contact";
 import {
@@ -377,7 +378,7 @@ export function useContactFilters(initialFilters?: AdvancedFilters) {
 }
 
 // Helper to get default operator for a field type
-function getDefaultOperator(fieldType: FilterFieldType): string {
+function getDefaultOperator(fieldType: FilterFieldType): FilterOperator {
   switch (fieldType) {
     case "text":
       return "contains";

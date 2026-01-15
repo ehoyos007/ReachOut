@@ -214,7 +214,11 @@ export type StatusOperator =
   | "is"
   | "is_not";
 
-export type FilterOperator = TextOperator | NumberOperator | DateOperator | TagOperator | StatusOperator;
+export type BooleanOperator =
+  | "is_true"
+  | "is_false";
+
+export type FilterOperator = TextOperator | NumberOperator | DateOperator | TagOperator | StatusOperator | BooleanOperator;
 
 // Filter field types
 export type FilterFieldType = "text" | "number" | "date" | "status" | "tags" | "boolean";
@@ -340,7 +344,7 @@ export const STATUS_OPERATORS: { value: StatusOperator; label: string }[] = [
   { value: "is_not", label: "is not" },
 ];
 
-export const BOOLEAN_OPERATORS = [
+export const BOOLEAN_OPERATORS: { value: BooleanOperator; label: string }[] = [
   { value: "is_true", label: "is true" },
   { value: "is_false", label: "is false" },
 ];

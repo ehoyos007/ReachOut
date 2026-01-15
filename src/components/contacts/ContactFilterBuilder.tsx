@@ -676,22 +676,24 @@ import * as LucideIcons from "lucide-react";
 function IconByName({
   name,
   className,
+  style,
 }: {
   name: string;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const pascalName = name
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
 
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[pascalName];
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[pascalName];
 
   if (!Icon) {
-    return <Filter className={className} />;
+    return <Filter className={className} style={style} />;
   }
 
-  return <Icon className={className} />;
+  return <Icon className={className} style={style} />;
 }
 
 export { IconByName };

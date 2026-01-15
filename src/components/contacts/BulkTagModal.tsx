@@ -78,7 +78,7 @@ export function BulkTagModal({
       const newTag = await onCreateTag(newTagName.trim(), newTagColor);
       if (newTag) {
         // Auto-select the newly created tag
-        setSelectedTagIds((prev) => new Set([...prev, newTag.id]));
+        setSelectedTagIds((prev) => new Set([...Array.from(prev), newTag.id]));
         setShowCreateTag(false);
         setNewTagName("");
         setNewTagColor(DEFAULT_TAG_COLORS[8]);

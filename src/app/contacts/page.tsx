@@ -257,7 +257,7 @@ export default function ContactsPage() {
     // Add tags to each selected contact
     for (const contact of selectedContacts) {
       const existingTagIds = contact.tags.map((t) => t.id);
-      const newTagIds = [...new Set([...existingTagIds, ...tagIds])];
+      const newTagIds = Array.from(new Set([...existingTagIds, ...tagIds]));
 
       await updateContact({
         id: contact.id,

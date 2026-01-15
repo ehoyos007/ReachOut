@@ -564,3 +564,130 @@ Existing schema fully supports this:
 
 **Feature Status:** Planning
 **Last Updated:** January 14, 2026
+
+---
+
+# Feature Plan: Contact Activity Timeline
+
+> Replace the chat view with a vertical timeline showing all contact events.
+
+## Objective
+
+**Goal:** Transform the contact detail page's message thread into a comprehensive activity timeline that displays all interactions (messages, status changes, tags, notes, calls) in a chronological, visually-differentiated format.
+
+**Success Criteria:**
+- [ ] Timeline displays all event types with appropriate icons
+- [ ] Events sorted most recent to oldest
+- [ ] Date headers group events by day
+- [ ] Can manually log a message/event via modal
+- [ ] Pagination loads older events without full page reload
+- [ ] Long content is truncated with "expand" option
+- [ ] Loading states shown during data fetches
+- [ ] Timeline performs well with 100+ events
+
+## Background
+
+Current `MessageThread` component displays SMS/email as chat bubbles. Users need visibility into ALL contact activity—including tag changes, status updates, manual notes, and calls.
+
+## Implementation Phases
+
+### Phase 1: Timeline Data Model
+
+Create unified event structure using a hybrid approach:
+1. Create `contact_events` table for new event types (notes, calls, tag/status changes)
+2. Query `messages` table directly for message events
+3. Merge and sort in application layer
+
+**Schema:**
+```sql
+CREATE TABLE contact_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+  event_type TEXT NOT NULL,
+  content TEXT,
+  metadata JSONB DEFAULT '{}',
+  direction TEXT,
+  created_by TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_contact_events_contact_created
+  ON contact_events(contact_id, created_at DESC);
+```
+
+**Event Types:** sms_sent, sms_received, email_sent, email_received, call_inbound, call_outbound, note_added, tag_added, tag_removed, status_changed, created, manual_message
+
+### Phase 2: Vertical Timeline UI
+
+Build the core timeline component:
+- Vertical spine connecting event dots
+- Event cards offset to the right
+- Date headers grouping events by day
+- Color-coding: outbound (blue), inbound (gray), system (purple)
+
+**Components:** ContactTimeline, TimelineEvent, TimelineEventIcon, TimelineDateGroup
+
+### Phase 3: Manual Event Documentation
+
+Add "Log Event" button with modal for documenting external interactions:
+- Event type dropdown (call, note, manual message)
+- Direction selector
+- Content textarea
+- Timestamp picker (allow backdating)
+
+**API:** `POST /api/contacts/:id/events`
+
+### Phase 4: Pagination / Infinite Scroll
+
+Implement cursor-based pagination:
+- Initial load: 30 most recent events
+- "Load More" button to fetch older events
+- Use React Query for caching
+- API: `GET /api/contacts/:id/timeline?before=<timestamp>&limit=30`
+
+### Phase 5: Event Expansion & Details
+
+Allow users to expand events for full details:
+- Click to expand inline
+- Show full content, metadata, related info
+- Click again to collapse
+
+## File Structure
+
+**New Files:**
+| File | Purpose |
+|------|---------|
+| `src/types/timeline.ts` | Event types and interfaces |
+| `src/components/contacts/ContactTimeline.tsx` | Main timeline component |
+| `src/components/contacts/TimelineEvent.tsx` | Individual event card |
+| `src/components/contacts/TimelineEventIcon.tsx` | Icon mapper |
+| `src/components/contacts/TimelineDateGroup.tsx` | Date grouping |
+| `src/components/contacts/LogEventModal.tsx` | Manual event logging |
+| `src/hooks/useContactTimeline.ts` | Data fetching hook |
+| `src/lib/timeline-utils.ts` | Date/formatting utilities |
+
+**Modified Files:**
+| File | Changes |
+|------|---------|
+| `src/app/contacts/[id]/page.tsx` | Replace MessageThread with ContactTimeline |
+| `src/lib/supabase.ts` | Add contact_events CRUD |
+
+## Risks & Mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| Performance with large timelines | Cursor pagination, 30 events/load |
+| No historical tag/status data | Forward-only tracking |
+| Message + events merge complexity | Single utility function |
+| Breaking message compose flow | Keep ComposeMessageModal unchanged |
+
+## Decisions Made
+
+- **Tag/status tracking:** Forward-only from implementation date
+- **Real-time updates:** Auto-refresh on focus
+- **Message compose:** Keep ComposeMessageModal in timeline header
+
+---
+
+**Feature Status:** Planning
+**Last Updated:** January 15, 2026

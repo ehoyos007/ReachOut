@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { MessageThread } from "@/components/contacts/MessageThread";
+import { ContactTimeline } from "@/components/contacts/ContactTimeline";
 import { ContactEnrollments } from "@/components/contacts/ContactEnrollments";
 import { useContactStore } from "@/lib/store/contactStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
@@ -558,12 +558,13 @@ export default function ContactDetailPage() {
               </Card>
             )}
 
-            {/* Message History */}
-            <MessageThread
+            {/* Activity Timeline */}
+            <ContactTimeline
               contactId={contactId}
               contactEmail={currentContact.email}
               contactPhone={currentContact.phone}
               contactName={getContactDisplayName(currentContact)}
+              contactCreatedAt={currentContact.created_at}
               contact={currentContact}
               customFields={customFields}
             />

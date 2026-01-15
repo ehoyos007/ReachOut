@@ -957,6 +957,170 @@ export async function getMessageCount(filters?: MessageFilters): Promise<number>
 }
 
 // =============================================================================
+// Contact Events Operations (Timeline)
+// =============================================================================
+
+import type {
+  ContactEvent,
+  CreateContactEventInput,
+  TimelineEvent,
+  TimelineResponse,
+} from "@/types/timeline";
+import {
+  mergeAndSortEvents,
+  normalizeContactEvents,
+  normalizeMessages,
+  createContactCreatedEvent,
+} from "@/lib/timeline-utils";
+
+export async function getContactEvents(contactId: string): Promise<ContactEvent[]> {
+  const { data, error } = await getSupabase()
+    .from("contact_events")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return (data || []) as ContactEvent[];
+}
+
+export async function getContactEventsPaginated(
+  contactId: string,
+  options?: { before?: string; limit?: number }
+): Promise<ContactEvent[]> {
+  const limit = options?.limit ?? 30;
+
+  let query = getSupabase()
+    .from("contact_events")
+    .select("*")
+    .eq("contact_id", contactId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (options?.before) {
+    query = query.lt("created_at", options.before);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return (data || []) as ContactEvent[];
+}
+
+export async function createContactEvent(
+  input: CreateContactEventInput
+): Promise<ContactEvent> {
+  const { data, error } = await getSupabase()
+    .from("contact_events")
+    .insert({
+      contact_id: input.contact_id,
+      event_type: input.event_type,
+      content: input.content || null,
+      direction: input.direction || null,
+      metadata: input.metadata || {},
+      created_by: input.created_by || null,
+      created_at: input.created_at || new Date().toISOString(),
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as ContactEvent;
+}
+
+export async function deleteContactEvent(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("contact_events")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+/**
+ * Fetch unified timeline for a contact
+ * Merges messages and contact_events, sorted by created_at descending
+ */
+export async function getContactTimeline(
+  contactId: string,
+  options?: { before?: string; limit?: number; includeCreated?: boolean }
+): Promise<TimelineResponse> {
+  const limit = options?.limit ?? 30;
+  const includeCreated = options?.includeCreated ?? true;
+
+  // Fetch both sources in parallel
+  const [messagesResult, eventsResult] = await Promise.all([
+    (async () => {
+      let query = getSupabase()
+        .from("messages")
+        .select("*")
+        .eq("contact_id", contactId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (options?.before) {
+        query = query.lt("created_at", options.before);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as Message[];
+    })(),
+    getContactEventsPaginated(contactId, { before: options?.before, limit }),
+  ]);
+
+  // Merge and sort
+  const merged = mergeAndSortEvents(messagesResult, eventsResult);
+
+  // Take only the requested limit
+  const trimmed = merged.slice(0, limit);
+
+  // Check if there are more events to load
+  const hasMore = messagesResult.length === limit || eventsResult.length === limit;
+
+  // Get the cursor for the next page
+  const nextCursor = trimmed.length > 0 ? trimmed[trimmed.length - 1].created_at : null;
+
+  return {
+    events: trimmed,
+    hasMore,
+    nextCursor,
+  };
+}
+
+/**
+ * Fetch full timeline including contact created event
+ * Useful for initial timeline load
+ */
+export async function getContactTimelineWithCreated(
+  contactId: string,
+  contactCreatedAt: string,
+  options?: { before?: string; limit?: number }
+): Promise<TimelineResponse> {
+  const response = await getContactTimeline(contactId, options);
+
+  // If we're on the last page and there are no more events,
+  // add the "created" event at the end
+  if (!response.hasMore && response.events.length > 0) {
+    const oldestEvent = response.events[response.events.length - 1];
+    const createdEventTime = new Date(contactCreatedAt).getTime();
+    const oldestEventTime = new Date(oldestEvent.created_at).getTime();
+
+    // Only add if the created event would be older than all current events
+    if (createdEventTime <= oldestEventTime) {
+      const createdEvent = createContactCreatedEvent(contactId, contactCreatedAt);
+      response.events.push(createdEvent);
+    }
+  } else if (response.events.length === 0) {
+    // No events at all - just show the created event
+    const createdEvent = createContactCreatedEvent(contactId, contactCreatedAt);
+    response.events.push(createdEvent);
+  }
+
+  return response;
+}
+
+// =============================================================================
 // Settings Operations
 // =============================================================================
 
