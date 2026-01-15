@@ -4,6 +4,67 @@
 
 ---
 
+## January 15, 2026 — Session 33
+
+### Summary
+Implemented Call Sub-Workflow action node - Complete feature allowing parent workflows to trigger and execute sub-workflows with input variable passing and execution mode control.
+
+### Completed
+- [x] Investigated sub-workflow system - found it was 50% designed but missing the action node
+- [x] Added `call_sub_workflow` to `WorkflowNodeType` enum in types
+- [x] Created `InputMapping`, `OnFailureBehavior`, and `CallSubWorkflowData` interfaces
+- [x] Added `NODE_TYPE_CONFIGS` entry for call_sub_workflow node
+- [x] Created `CallSubWorkflowNode.tsx` visual node component with cyan theme
+- [x] Created `CallSubWorkflowPanel.tsx` configuration panel with:
+  - Target workflow selector (filters to sub_workflow triggers only)
+  - Execution mode toggle (sync/async)
+  - Input variable mappings with type info
+  - Timeout configuration for sync mode
+  - On-failure behavior (stop/continue/retry)
+- [x] Added `getSubWorkflows()` helper function to supabase.ts
+- [x] Created `SubWorkflowInfo` interface for sub-workflow metadata
+- [x] Created `callSubWorkflowProcessor` in node-processors.ts with:
+  - Target workflow validation
+  - Circular reference detection
+  - Enrollment and execution creation
+  - Input variable resolution via context
+  - Async execution mode (immediate return)
+  - On-failure handling (stop/continue/retry)
+- [x] Registered node in WorkflowCanvas (nodeTypes, MiniMap color)
+- [x] Added node to NodePalette Actions category
+- [x] Registered panel in NodeConfigPanel
+- [x] Exported component from nodes/index.ts
+- [x] Fixed React hooks order error in CallSubWorkflowPanel
+
+### Files Changed
+- `src/types/workflow.ts` — Extended: Added call_sub_workflow type, InputMapping, OnFailureBehavior, CallSubWorkflowData, NODE_TYPE_CONFIGS entry
+- `src/components/workflow/nodes/CallSubWorkflowNode.tsx` — New: Visual node with cyan theme and dynamic sublabel
+- `src/components/workflow/panels/CallSubWorkflowPanel.tsx` — New: Full configuration panel (350+ lines)
+- `src/lib/supabase.ts` — Extended: Added SubWorkflowInfo interface and getSubWorkflows() function
+- `src/lib/workflow-executor/node-processors.ts` — Extended: Added callSubWorkflowProcessor with full execution logic
+- `src/components/workflow/WorkflowCanvas.tsx` — Updated: Registered CallSubWorkflowNode and MiniMap color
+- `src/components/workflow/NodePalette.tsx` — Updated: Added Workflow icon and call_sub_workflow node
+- `src/components/workflow/panels/NodeConfigPanel.tsx` — Updated: Registered CallSubWorkflowPanel
+- `src/components/workflow/nodes/index.ts` — Updated: Export CallSubWorkflowNode
+
+### Decisions Made
+- **Cyan theme:** Used cyan color scheme (text-cyan-600, bg-cyan-100) to distinguish from other action nodes
+- **Sub-workflow filter:** Only workflows with `sub_workflow` trigger type appear in dropdown
+- **Circular reference detection:** Prevents workflows from calling themselves
+- **Async mode:** Returns immediately with null nextNodeId for fire-and-forget execution
+- **Input mapping:** Maps parent workflow context values to sub-workflow input variables
+
+### Blockers / Issues Encountered
+- **React hooks order error:** useEffect was called after early return; fixed by moving hook before conditional return
+- **Pre-existing build error:** Unrelated error in `/api/messages/sent/route.ts` about createClient export (not caused by this work)
+
+### Next Steps
+- [ ] Test end-to-end sub-workflow execution
+- [ ] Implement sync execution mode with waiting for sub-workflow completion
+- [ ] Add returned data access via {{node_id.result}} syntax
+
+---
+
 ## January 15, 2026 — Session 32
 
 ### Summary
@@ -1572,4 +1633,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 32)
+**Last Updated:** January 15, 2026 (Session 33)
