@@ -38,6 +38,7 @@ export interface Message {
   workflow_execution_id: string | null;
   scheduled_at: string | null; // ISO timestamp for scheduled messages
   from_identity: MessageFromIdentity | null; // Sender identity used
+  sent_by: string | null; // UUID of user who sent (null = system/automation)
   sent_at: string | null;
   delivered_at: string | null;
   failed_at: string | null;
@@ -64,6 +65,7 @@ export interface DbMessage {
   workflow_execution_id: string | null;
   scheduled_at: string | null;
   from_identity: MessageFromIdentity | null;
+  sent_by: string | null;
   sent_at: string | null;
   delivered_at: string | null;
   failed_at: string | null;

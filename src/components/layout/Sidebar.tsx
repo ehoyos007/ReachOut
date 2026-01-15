@@ -11,6 +11,7 @@ import {
   Settings,
   Bell,
   X,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/workflows", label: "Workflows", icon: GitBranch },
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/templates", label: "Templates", icon: FileText },
+  { href: "/messages/sent", label: "Sent Messages", icon: Send },
   { href: "/scheduled-messages", label: "Scheduled", icon: Clock },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/notifications", label: "Notifications", icon: Bell },

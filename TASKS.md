@@ -7,7 +7,27 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 ---
 
 ## In Progress
-*No tasks currently in progress*
+
+### Feature: Sent Messages Dashboard
+**Plan:** `plans/PLAN-sent-messages-dashboard.md`
+
+**Phase 1: Page & Route Setup** - COMPLETE
+- [x] Create database migration for `sent_by` column and full-text search index
+- [x] Create page at `/messages/sent` with basic structure
+- [x] Add "Sent Messages" link to sidebar navigation (Send icon)
+- [x] Page header: "Sent Messages" with subtitle showing total count
+- [x] Implement loading skeleton and empty state
+- [x] Create API endpoint at `/api/messages/sent`
+- [x] Add filter bar (search, type, status filters)
+- [x] Implement expandable row details with contact info
+- [x] Add pagination
+
+**Phase 2-6: Remaining Features** (Ready to implement)
+- [ ] Date range picker filter
+- [ ] Column header sorting
+- [ ] Resend message action (opens composer pre-filled)
+- [ ] "View Full Message" modal for long emails
+- [ ] Contact tags display in expanded view
 
 ---
 
