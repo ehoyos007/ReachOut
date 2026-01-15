@@ -884,6 +884,8 @@ export async function createMessage(input: CreateMessageInput): Promise<Message>
       provider_error: input.provider_error || null,
       template_id: input.template_id || null,
       workflow_execution_id: input.workflow_execution_id || null,
+      scheduled_at: input.scheduled_at || null,
+      from_identity: input.from_identity || null,
     })
     .select()
     .single();
@@ -1503,4 +1505,328 @@ export async function deleteReadNotifications(): Promise<void> {
     .eq("is_read", true);
 
   if (error) throw error;
+}
+
+// =============================================================================
+// Scheduled Message Operations
+// =============================================================================
+
+import type { ScheduledMessageFilters, MessageFromIdentity } from "@/types/message";
+import type {
+  SenderEmail,
+  SenderPhone,
+  CreateSenderEmailInput,
+  UpdateSenderEmailInput,
+  CreateSenderPhoneInput,
+  UpdateSenderPhoneInput,
+} from "@/types/sender";
+
+/**
+ * Get scheduled messages that are due for sending
+ */
+export async function getDueScheduledMessages(limit: number = 100): Promise<Message[]> {
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .select("*")
+    .eq("status", "scheduled")
+    .lte("scheduled_at", new Date().toISOString())
+    .order("scheduled_at", { ascending: true })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data || []) as Message[];
+}
+
+/**
+ * Get all scheduled messages with optional filters
+ */
+export async function getScheduledMessages(
+  filters?: ScheduledMessageFilters,
+  pagination?: { page: number; pageSize: number }
+): Promise<{ messages: Message[]; total: number }> {
+  const client = getSupabase();
+
+  const page = pagination?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = client
+    .from("messages")
+    .select("*, contacts(first_name, last_name, email, phone)", { count: "exact" })
+    .eq("status", "scheduled")
+    .order("scheduled_at", { ascending: true });
+
+  // Apply filters
+  if (filters?.contact_id) {
+    query = query.eq("contact_id", filters.contact_id);
+  }
+
+  if (filters?.channel) {
+    query = query.eq("channel", filters.channel);
+  }
+
+  if (filters?.scheduled_after) {
+    query = query.gte("scheduled_at", filters.scheduled_after);
+  }
+
+  if (filters?.scheduled_before) {
+    query = query.lte("scheduled_at", filters.scheduled_before);
+  }
+
+  query = query.range(from, to);
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+  return {
+    messages: (data || []) as Message[],
+    total: count || 0,
+  };
+}
+
+/**
+ * Cancel a scheduled message (deletes it)
+ */
+export async function cancelScheduledMessage(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("messages")
+    .delete()
+    .eq("id", id)
+    .eq("status", "scheduled");
+
+  if (error) throw error;
+}
+
+/**
+ * Update a scheduled message (reschedule or modify)
+ */
+export async function updateScheduledMessage(
+  id: string,
+  updates: {
+    body?: string;
+    subject?: string;
+    scheduled_at?: string;
+    from_identity?: MessageFromIdentity | null;
+  }
+): Promise<Message> {
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.body !== undefined) updateData.body = updates.body;
+  if (updates.subject !== undefined) updateData.subject = updates.subject;
+  if (updates.scheduled_at !== undefined) updateData.scheduled_at = updates.scheduled_at;
+  if (updates.from_identity !== undefined) updateData.from_identity = updates.from_identity;
+
+  const { data, error } = await getSupabase()
+    .from("messages")
+    .update(updateData)
+    .eq("id", id)
+    .eq("status", "scheduled")
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Message;
+}
+
+// =============================================================================
+// Sender Identity Operations
+// =============================================================================
+
+/**
+ * Get all sender email identities from settings
+ */
+export async function getSenderEmails(): Promise<SenderEmail[]> {
+  const setting = await getSetting("sender_emails");
+  if (!setting?.value) return [];
+
+  try {
+    return JSON.parse(setting.value) as SenderEmail[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get all sender phone identities from settings
+ */
+export async function getSenderPhones(): Promise<SenderPhone[]> {
+  const setting = await getSetting("sender_phones");
+  if (!setting?.value) return [];
+
+  try {
+    return JSON.parse(setting.value) as SenderPhone[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Add a new sender email identity
+ */
+export async function addSenderEmail(input: CreateSenderEmailInput): Promise<SenderEmail> {
+  const senders = await getSenderEmails();
+
+  const newSender: SenderEmail = {
+    id: crypto.randomUUID(),
+    email: input.email,
+    name: input.name,
+    is_default: input.is_default ?? senders.length === 0,
+    verified: false,
+    created_at: new Date().toISOString(),
+  };
+
+  // If this is set as default, unset others
+  if (newSender.is_default) {
+    senders.forEach((s) => (s.is_default = false));
+  }
+
+  senders.push(newSender);
+  await updateSetting("sender_emails", JSON.stringify(senders));
+
+  return newSender;
+}
+
+/**
+ * Update a sender email identity
+ */
+export async function updateSenderEmailIdentity(input: UpdateSenderEmailInput): Promise<SenderEmail> {
+  const senders = await getSenderEmails();
+  const index = senders.findIndex((s) => s.id === input.id);
+
+  if (index === -1) {
+    throw new Error("Sender email not found");
+  }
+
+  // If setting as default, unset others
+  if (input.is_default === true) {
+    senders.forEach((s) => (s.is_default = false));
+  }
+
+  senders[index] = {
+    ...senders[index],
+    ...(input.email !== undefined && { email: input.email }),
+    ...(input.name !== undefined && { name: input.name }),
+    ...(input.is_default !== undefined && { is_default: input.is_default }),
+    ...(input.verified !== undefined && { verified: input.verified }),
+  };
+
+  await updateSetting("sender_emails", JSON.stringify(senders));
+  return senders[index];
+}
+
+/**
+ * Remove a sender email identity
+ */
+export async function removeSenderEmail(id: string): Promise<void> {
+  let senders = await getSenderEmails();
+  const wasDefault = senders.find((s) => s.id === id)?.is_default;
+
+  senders = senders.filter((s) => s.id !== id);
+
+  // If removed sender was default, make first remaining one default
+  if (wasDefault && senders.length > 0) {
+    senders[0].is_default = true;
+  }
+
+  await updateSetting("sender_emails", JSON.stringify(senders));
+}
+
+/**
+ * Add a new sender phone identity
+ */
+export async function addSenderPhone(input: CreateSenderPhoneInput): Promise<SenderPhone> {
+  const senders = await getSenderPhones();
+
+  const newSender: SenderPhone = {
+    id: crypto.randomUUID(),
+    phone: input.phone,
+    label: input.label,
+    is_default: input.is_default ?? senders.length === 0,
+    created_at: new Date().toISOString(),
+  };
+
+  if (newSender.is_default) {
+    senders.forEach((s) => (s.is_default = false));
+  }
+
+  senders.push(newSender);
+  await updateSetting("sender_phones", JSON.stringify(senders));
+
+  return newSender;
+}
+
+/**
+ * Update a sender phone identity
+ */
+export async function updateSenderPhoneIdentity(input: UpdateSenderPhoneInput): Promise<SenderPhone> {
+  const senders = await getSenderPhones();
+  const index = senders.findIndex((s) => s.id === input.id);
+
+  if (index === -1) {
+    throw new Error("Sender phone not found");
+  }
+
+  if (input.is_default === true) {
+    senders.forEach((s) => (s.is_default = false));
+  }
+
+  senders[index] = {
+    ...senders[index],
+    ...(input.phone !== undefined && { phone: input.phone }),
+    ...(input.label !== undefined && { label: input.label }),
+    ...(input.is_default !== undefined && { is_default: input.is_default }),
+  };
+
+  await updateSetting("sender_phones", JSON.stringify(senders));
+  return senders[index];
+}
+
+/**
+ * Remove a sender phone identity
+ */
+export async function removeSenderPhone(id: string): Promise<void> {
+  let senders = await getSenderPhones();
+  const wasDefault = senders.find((s) => s.id === id)?.is_default;
+
+  senders = senders.filter((s) => s.id !== id);
+
+  if (wasDefault && senders.length > 0) {
+    senders[0].is_default = true;
+  }
+
+  await updateSetting("sender_phones", JSON.stringify(senders));
+}
+
+/**
+ * Get sender identity by ID
+ */
+export async function getSenderIdentity(
+  type: "sms" | "email",
+  id: string
+): Promise<SenderPhone | SenderEmail | null> {
+  if (type === "sms") {
+    const phones = await getSenderPhones();
+    return phones.find((p) => p.id === id) || null;
+  } else {
+    const emails = await getSenderEmails();
+    return emails.find((e) => e.id === id) || null;
+  }
+}
+
+/**
+ * Get the default sender for a channel
+ */
+export async function getDefaultSender(
+  channel: "sms" | "email"
+): Promise<SenderPhone | SenderEmail | null> {
+  if (channel === "sms") {
+    const phones = await getSenderPhones();
+    return phones.find((p) => p.is_default) || phones[0] || null;
+  } else {
+    const emails = await getSenderEmails();
+    return emails.find((e) => e.is_default) || emails[0] || null;
+  }
 }

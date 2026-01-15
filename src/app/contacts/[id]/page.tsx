@@ -564,6 +564,8 @@ export default function ContactDetailPage() {
               contactEmail={currentContact.email}
               contactPhone={currentContact.phone}
               contactName={getContactDisplayName(currentContact)}
+              contact={currentContact}
+              customFields={customFields}
             />
           </div>
 

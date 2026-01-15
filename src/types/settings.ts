@@ -34,7 +34,9 @@ export type SettingKey =
   | "twilio_phone_number"
   | "sendgrid_api_key"
   | "sendgrid_from_email"
-  | "sendgrid_from_name";
+  | "sendgrid_from_name"
+  | "sender_emails"
+  | "sender_phones";
 
 export const SETTING_KEYS: SettingKey[] = [
   "twilio_account_sid",
@@ -43,6 +45,8 @@ export const SETTING_KEYS: SettingKey[] = [
   "sendgrid_api_key",
   "sendgrid_from_email",
   "sendgrid_from_name",
+  "sender_emails",
+  "sender_phones",
 ];
 
 // =============================================================================
