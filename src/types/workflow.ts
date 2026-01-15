@@ -26,6 +26,28 @@ export type ComparisonOperator =
   | "is_empty"
   | "is_not_empty";
 
+// Logical operators for combining conditions
+export type LogicalOperator = "AND" | "OR";
+
+// =============================================================================
+// Condition Types (for Conditional Split)
+// =============================================================================
+
+// A single condition
+export interface Condition {
+  id: string;
+  field: string;
+  operator: ComparisonOperator;
+  value: string;
+}
+
+// A group of conditions joined by the same logical operator
+export interface ConditionGroup {
+  id: string;
+  conditions: Condition[];
+  logicalOperator: LogicalOperator;
+}
+
 // Contact status values
 export type ContactStatus =
   | "new"
@@ -190,9 +212,13 @@ export interface TimeDelayData extends BaseNodeData {
 
 export interface ConditionalSplitData extends BaseNodeData {
   label: string;
-  field: string;
-  operator: ComparisonOperator;
-  value: string;
+  // New structure: array of condition groups with group-level operator
+  conditionGroups: ConditionGroup[];
+  groupOperator: LogicalOperator;
+  // Legacy fields (for backward compatibility - auto-migrated on load)
+  field?: string;
+  operator?: ComparisonOperator;
+  value?: string;
 }
 
 export interface SendSmsData extends BaseNodeData {
@@ -377,10 +403,9 @@ export const NODE_TYPE_CONFIGS: NodeTypeConfig[] = [
     category: "logic",
     defaultData: {
       label: "Check condition",
-      field: "",
-      operator: "equals",
-      value: "",
-    },
+      conditionGroups: [],  // Empty array - createDefaultNode will populate with fresh IDs
+      groupOperator: "AND",
+    } as ConditionalSplitData,
     hasMultipleOutputs: true,
   },
   {
@@ -475,11 +500,17 @@ export function createDefaultNode(
     throw new Error(`Unknown node type: ${type}`);
   }
 
+  // Special handling for conditional_split to generate unique IDs
+  const data =
+    type === "conditional_split"
+      ? createDefaultConditionalSplitData()
+      : { ...config.defaultData };
+
   return {
     id: crypto.randomUUID(),
     type,
     position,
-    data: { ...config.defaultData },
+    data,
   } as WorkflowNode;
 }
 
@@ -516,6 +547,123 @@ export const OPERATOR_DISPLAY_NAMES: Record<ComparisonOperator, string> = {
   is_empty: "is empty",
   is_not_empty: "is not empty",
 };
+
+// =============================================================================
+// Condition Helpers
+// =============================================================================
+
+// Create a new empty condition
+export function createCondition(
+  field: string = "",
+  operator: ComparisonOperator = "equals",
+  value: string = ""
+): Condition {
+  return {
+    id: crypto.randomUUID(),
+    field,
+    operator,
+    value,
+  };
+}
+
+// Create a new condition group with one empty condition
+export function createConditionGroup(
+  logicalOperator: LogicalOperator = "AND"
+): ConditionGroup {
+  return {
+    id: crypto.randomUUID(),
+    conditions: [createCondition()],
+    logicalOperator,
+  };
+}
+
+// Create default ConditionalSplitData
+export function createDefaultConditionalSplitData(): ConditionalSplitData {
+  return {
+    label: "Check condition",
+    conditionGroups: [createConditionGroup()],
+    groupOperator: "AND",
+  };
+}
+
+// Migrate legacy single-condition data to new format
+export function migrateConditionalSplitData(
+  data: ConditionalSplitData
+): ConditionalSplitData {
+  // If already has conditionGroups, return as-is
+  if (data.conditionGroups && data.conditionGroups.length > 0) {
+    return data;
+  }
+
+  // Migrate legacy format (field, operator, value) to new format
+  const legacyField = data.field || "";
+  const legacyOperator = data.operator || "equals";
+  const legacyValue = data.value || "";
+
+  return {
+    label: data.label,
+    conditionGroups: [
+      {
+        id: crypto.randomUUID(),
+        conditions: [
+          {
+            id: crypto.randomUUID(),
+            field: legacyField,
+            operator: legacyOperator,
+            value: legacyValue,
+          },
+        ],
+        logicalOperator: "AND",
+      },
+    ],
+    groupOperator: "AND",
+  };
+}
+
+// Count total conditions across all groups
+export function countConditions(data: ConditionalSplitData): number {
+  if (!data.conditionGroups) return 0;
+  return data.conditionGroups.reduce(
+    (sum, group) => sum + (group.conditions?.length || 0),
+    0
+  );
+}
+
+// Check if complexity warning should be shown
+export function shouldShowComplexityWarning(data: ConditionalSplitData): boolean {
+  const groupCount = data.conditionGroups?.length || 0;
+  const conditionCount = countConditions(data);
+  return groupCount >= 5 || conditionCount >= 10;
+}
+
+// Format conditions for display (summary text)
+export function formatConditionSummary(data: ConditionalSplitData): string {
+  const groupCount = data.conditionGroups?.length || 0;
+  const conditionCount = countConditions(data);
+
+  if (conditionCount === 0) {
+    return "No conditions set";
+  }
+
+  if (conditionCount === 1 && groupCount === 1) {
+    const condition = data.conditionGroups[0]?.conditions[0];
+    if (condition) {
+      const opDisplay = OPERATOR_DISPLAY_NAMES[condition.operator] || condition.operator;
+      if (condition.operator === "is_empty" || condition.operator === "is_not_empty") {
+        return `${condition.field} ${opDisplay}`;
+      }
+      return `${condition.field} ${opDisplay} ${condition.value}`;
+    }
+  }
+
+  // Multiple conditions: show summary
+  const conditionText = conditionCount === 1 ? "condition" : "conditions";
+  if (groupCount === 1) {
+    return `${conditionCount} ${conditionText}`;
+  }
+  const groupText = groupCount === 1 ? "group" : "groups";
+  return `${conditionCount} ${conditionText} (${groupCount} ${groupText})`;
+}
 
 // Format trigger config for display
 export function formatTriggerConfig(config: TriggerConfig): string {

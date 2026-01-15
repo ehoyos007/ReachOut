@@ -10,7 +10,10 @@ import type {
   CallSubWorkflowData,
   ComparisonOperator,
   TriggerConfig,
+  Condition,
+  ConditionGroup,
 } from "@/types/workflow";
+import { migrateConditionalSplitData } from "@/types/workflow";
 import type {
   NodeProcessor,
   NodeProcessorContext,
@@ -106,9 +109,9 @@ async function getSendGridSettings(): Promise<SendGridSettings | null> {
 }
 
 /**
- * Evaluate a conditional expression
+ * Evaluate a single conditional expression
  */
-function evaluateCondition(
+function evaluateSingleCondition(
   fieldValue: string | null | undefined,
   operator: ComparisonOperator,
   compareValue: string
@@ -134,6 +137,66 @@ function evaluateCondition(
       return !!value && value.trim() !== "";
     default:
       return false;
+  }
+}
+
+/**
+ * Evaluate a condition object against contact data
+ */
+function evaluateCondition(
+  condition: Condition,
+  context: NodeProcessorContext
+): boolean {
+  const fieldValue = getContactFieldValue(context, condition.field);
+  return evaluateSingleCondition(fieldValue, condition.operator, condition.value);
+}
+
+/**
+ * Evaluate a group of conditions with AND/OR logic
+ */
+function evaluateConditionGroup(
+  group: ConditionGroup,
+  context: NodeProcessorContext
+): boolean {
+  if (!group.conditions || group.conditions.length === 0) {
+    return true; // Empty group evaluates to true
+  }
+
+  if (group.logicalOperator === "AND") {
+    return group.conditions.every((condition) =>
+      evaluateCondition(condition, context)
+    );
+  } else {
+    // OR
+    return group.conditions.some((condition) =>
+      evaluateCondition(condition, context)
+    );
+  }
+}
+
+/**
+ * Evaluate all condition groups with the group operator
+ */
+function evaluateAllConditions(
+  data: ConditionalSplitData,
+  context: NodeProcessorContext
+): boolean {
+  // Migrate legacy format if needed
+  const migratedData = migrateConditionalSplitData(data);
+
+  if (!migratedData.conditionGroups || migratedData.conditionGroups.length === 0) {
+    return true; // No conditions = true
+  }
+
+  if (migratedData.groupOperator === "AND") {
+    return migratedData.conditionGroups.every((group) =>
+      evaluateConditionGroup(group, context)
+    );
+  } else {
+    // OR
+    return migratedData.conditionGroups.some((group) =>
+      evaluateConditionGroup(group, context)
+    );
   }
 }
 
@@ -209,22 +272,33 @@ export const timeDelayProcessor: NodeProcessor = {
 };
 
 /**
- * Conditional Split Node - Evaluate condition and branch
+ * Conditional Split Node - Evaluate condition(s) and branch
  */
 export const conditionalSplitProcessor: NodeProcessor = {
   async execute(node, context): Promise<NodeProcessorResult> {
     const data = node.data as ConditionalSplitData;
 
-    // Get the field value from the contact
-    const fieldValue = getContactFieldValue(context, data.field);
-
-    // Evaluate the condition
-    const result = evaluateCondition(fieldValue, data.operator, data.value);
+    // Migrate legacy format if needed and evaluate all conditions
+    const migratedData = migrateConditionalSplitData(data);
+    const result = evaluateAllConditions(migratedData, context);
 
     // Find the appropriate edge based on result
     // Yes edge has sourceHandle "yes", No edge has sourceHandle "no"
     const sourceHandle = result ? "yes" : "no";
     const nextNodeId = getNextNodeId(context.workflow, node.id, sourceHandle);
+
+    // Build detailed evaluation log for debugging
+    const evaluationDetails = migratedData.conditionGroups.map((group) => ({
+      groupId: group.id,
+      logicalOperator: group.logicalOperator,
+      conditions: group.conditions.map((condition) => ({
+        field: condition.field,
+        operator: condition.operator,
+        value: condition.value,
+        fieldValue: getContactFieldValue(context, condition.field),
+        result: evaluateCondition(condition, context),
+      })),
+    }));
 
     return {
       nextNodeId,
@@ -234,10 +308,13 @@ export const conditionalSplitProcessor: NodeProcessor = {
       },
       outputData: {
         action: "condition_evaluated",
-        field: data.field,
-        operator: data.operator,
-        value: data.value,
-        field_value: fieldValue,
+        groupOperator: migratedData.groupOperator,
+        groupCount: migratedData.conditionGroups.length,
+        conditionCount: migratedData.conditionGroups.reduce(
+          (sum, g) => sum + g.conditions.length,
+          0
+        ),
+        evaluationDetails,
         result,
         branch: result ? "yes" : "no",
       },
