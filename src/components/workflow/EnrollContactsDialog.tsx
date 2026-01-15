@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -55,17 +55,7 @@ export function EnrollContactsDialog({
   const { enrollContacts, isEnrolling, counts, fetchEnrollmentCounts } =
     useEnrollmentStore();
 
-  // Load contacts when dialog opens
-  useEffect(() => {
-    if (open) {
-      loadContacts();
-      fetchEnrollmentCounts(workflowId);
-      setEnrollResult(null);
-      setSelectedIds(new Set());
-    }
-  }, [open, workflowId]);
-
-  const loadContacts = async () => {
+  const loadContacts = useCallback(async () => {
     setIsLoadingContacts(true);
     try {
       const { getContacts } = await import("@/lib/supabase");
@@ -79,7 +69,17 @@ export function EnrollContactsDialog({
     } finally {
       setIsLoadingContacts(false);
     }
-  };
+  }, []);
+
+  // Load contacts when dialog opens
+  useEffect(() => {
+    if (open) {
+      loadContacts();
+      fetchEnrollmentCounts(workflowId);
+      setEnrollResult(null);
+      setSelectedIds(new Set());
+    }
+  }, [open, workflowId, loadContacts, fetchEnrollmentCounts]);
 
   const filteredContacts = contacts.filter((contact) => {
     if (!searchQuery) return true;

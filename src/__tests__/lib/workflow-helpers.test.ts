@@ -7,7 +7,7 @@ import {
   CHANNEL_DISPLAY_NAMES,
   OPERATOR_DISPLAY_NAMES,
 } from '@/types/workflow';
-import type { WorkflowNodeType, TimeUnit } from '@/types/workflow';
+import type { WorkflowNodeType } from '@/types/workflow';
 
 describe('workflow helpers', () => {
   describe('getNodeTypeConfig', () => {

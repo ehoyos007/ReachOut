@@ -112,14 +112,14 @@ export default function TemplatesPage() {
       return;
     }
     fetchTemplates();
-  }, []);
+  }, [fetchTemplates]);
 
   // Refetch when filters change
   useEffect(() => {
     if (supabaseReady) {
       fetchTemplates();
     }
-  }, [filters.channel]);
+  }, [filters.channel, fetchTemplates, supabaseReady]);
 
   // Debounced search
   useEffect(() => {
@@ -130,7 +130,7 @@ export default function TemplatesPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [filters.search]);
+  }, [filters.search, fetchTemplates, supabaseReady]);
 
   const openCreateDialog = () => {
     setEditingTemplate(null);

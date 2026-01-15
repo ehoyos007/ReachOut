@@ -17,10 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { NotificationWithRelations, NotificationType } from "@/types/notification";
-import {
-  getNotificationIcon,
-  getNotificationTypeLabel,
-} from "@/types/notification";
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);

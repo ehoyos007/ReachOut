@@ -35,7 +35,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { SavedView, AdvancedFilters } from "@/types/contact";
+import type { SavedView } from "@/types/contact";
 import { SAVED_VIEW_COLORS, SAVED_VIEW_ICONS } from "@/types/contact";
 import { IconByName } from "./ContactFilterBuilder";
 import type { UseSavedViewsReturn } from "@/hooks/useSavedViews";

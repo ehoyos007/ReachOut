@@ -1,5 +1,4 @@
 import type {
-  WorkflowNode,
   WorkflowNodeType,
   TimeDelayData,
   ConditionalSplitData,
@@ -9,7 +8,6 @@ import type {
   StopOnReplyData,
   ReturnToParentData,
   ComparisonOperator,
-  ChannelType,
 } from "@/types/workflow";
 import type {
   NodeProcessor,

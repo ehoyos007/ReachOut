@@ -5,8 +5,6 @@ import {
   getContact,
   getSetting,
   getSenderIdentity,
-  getSenderEmails,
-  getSenderPhones,
 } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";

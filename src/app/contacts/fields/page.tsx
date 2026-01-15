@@ -14,7 +14,6 @@ import {
   Calendar,
   List,
   X,
-  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,7 +109,7 @@ export default function CustomFieldsPage() {
       return;
     }
     fetchCustomFields();
-  }, []);
+  }, [fetchCustomFields]);
 
   const openCreateDialog = () => {
     setEditingField(null);

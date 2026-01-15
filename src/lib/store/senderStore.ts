@@ -45,7 +45,7 @@ interface SenderState {
   clearError: () => void;
 }
 
-export const useSenderStore = create<SenderState>((set, get) => ({
+export const useSenderStore = create<SenderState>((set) => ({
   // Initial data
   emails: [],
   phones: [],

@@ -58,13 +58,12 @@ import { ContactEnrollments } from "@/components/contacts/ContactEnrollments";
 import { useContactStore } from "@/lib/store/contactStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import type { Contact, UpdateContactInput, CustomField, Tag as TagType } from "@/types/contact";
+import type { Contact, UpdateContactInput } from "@/types/contact";
 import {
   getContactDisplayName,
   getContactInitials,
   formatPhoneNumber,
   STATUS_DISPLAY_NAMES,
-  FIELD_TYPE_DISPLAY_NAMES,
 } from "@/types/contact";
 
 const STATUS_COLORS: Record<Contact["status"], string> = {

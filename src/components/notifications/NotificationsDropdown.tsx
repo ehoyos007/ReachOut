@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, CheckCheck, Trash2, X } from "lucide-react";
+import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -14,10 +14,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useNotificationStore } from "@/lib/store/notificationStore";
 import type { NotificationWithRelations } from "@/types/notification";
-import {
-  getNotificationIcon,
-  getNotificationTypeLabel,
-} from "@/types/notification";
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
@@ -132,12 +128,24 @@ export function NotificationsDropdown() {
     deleteNotification,
   } = useNotificationStore();
 
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch("/api/notifications?limit=20");
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  }, [setNotifications]);
+
   // Fetch notifications on mount and when opened
   useEffect(() => {
     if (open) {
       fetchNotifications();
     }
-  }, [open]);
+  }, [open, fetchNotifications]);
 
   // Poll for new notifications every 30 seconds
   useEffect(() => {
@@ -149,19 +157,7 @@ export function NotificationsDropdown() {
     fetchNotifications();
 
     return () => clearInterval(interval);
-  }, []);
-
-  async function fetchNotifications() {
-    try {
-      const response = await fetch("/api/notifications?limit=20");
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications);
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    }
-  }
+  }, [fetchNotifications]);
 
   async function handleMarkAsRead(id: string) {
     try {

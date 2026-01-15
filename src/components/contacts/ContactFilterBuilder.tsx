@@ -38,8 +38,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type {
   FilterCondition,
   FilterGroup,
-  AdvancedFilters,
-  FilterFieldType,
   Tag,
 } from "@/types/contact";
 import {
@@ -159,7 +157,6 @@ export function ContactFilterBuilder({
                   key={group.id}
                   group={group}
                   groupIndex={groupIndex}
-                  totalGroups={filters.groups.length}
                   groupsLogic={filters.groupLogic}
                   tags={tags}
                   onUpdateGroupLogic={updateGroupLogic}
@@ -262,7 +259,6 @@ export function ContactFilterBuilder({
 interface FilterGroupComponentProps {
   group: FilterGroup;
   groupIndex: number;
-  totalGroups: number;
   groupsLogic: "and" | "or";
   tags: Tag[];
   onUpdateGroupLogic: (groupId: string, logic: "and" | "or") => void;
@@ -285,7 +281,6 @@ interface FilterGroupComponentProps {
 function FilterGroupComponent({
   group,
   groupIndex,
-  totalGroups,
   groupsLogic,
   tags,
   onUpdateGroupLogic,

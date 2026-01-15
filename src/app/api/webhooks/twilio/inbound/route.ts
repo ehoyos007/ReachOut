@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
     const formData = new URLSearchParams(body);
     const messageSid = formData.get("MessageSid");
     const from = formData.get("From");
-    const to = formData.get("To");
     const messageBody = formData.get("Body");
 
     if (!messageSid || !from || !messageBody) {

@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import {
-  Node,
   Edge,
   OnNodesChange,
   OnEdgesChange,

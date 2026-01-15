@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Loader2, GitBranch, Play, Pause, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import {
@@ -60,11 +60,7 @@ export function ContactEnrollments({ contactId }: ContactEnrollmentsProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadEnrollments();
-  }, [contactId]);
-
-  const loadEnrollments = async () => {
+  const loadEnrollments = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -78,7 +74,11 @@ export function ContactEnrollments({ contactId }: ContactEnrollmentsProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [contactId]);
+
+  useEffect(() => {
+    loadEnrollments();
+  }, [loadEnrollments]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

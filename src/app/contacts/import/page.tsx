@@ -72,7 +72,6 @@ import type {
   CsvImportError,
   CreateContactInput,
   Contact,
-  Tag,
 } from "@/types/contact";
 import { STANDARD_CONTACT_FIELDS, STATUS_DISPLAY_NAMES, DEFAULT_TAG_COLORS } from "@/types/contact";
 
@@ -122,7 +121,6 @@ export default function ImportContactsPage() {
   const [currentStep, setCurrentStep] = useState<ImportStep>("upload");
 
   // File state
-  const [fileName, setFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
 
   // CSV data state
@@ -131,7 +129,6 @@ export default function ImportContactsPage() {
   const [mappings, setMappings] = useState<CsvMapping[]>([]);
 
   // Import state
-  const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
 
@@ -286,8 +283,6 @@ export default function ImportContactsPage() {
       setFileError("Please select a CSV file");
       return;
     }
-
-    setFileName(file.name);
 
     Papa.parse(file, {
       header: true,
@@ -452,7 +447,6 @@ export default function ImportContactsPage() {
 
   const runImport = async () => {
     setCurrentStep("importing");
-    setIsImporting(true);
     setImportProgress(0);
 
     const result: CsvImportResult = {
@@ -513,13 +507,11 @@ export default function ImportContactsPage() {
     }
 
     setImportResult(result);
-    setIsImporting(false);
     setCurrentStep("complete");
   };
 
   const resetImport = () => {
     setCurrentStep("upload");
-    setFileName(null);
     setFileError(null);
     setColumns([]);
     setAllRows([]);

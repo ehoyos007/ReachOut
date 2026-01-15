@@ -15,7 +15,6 @@ import {
 } from "@/types/settings";
 import {
   getSettings as fetchSettingsFromDb,
-  getSetting as fetchSettingFromDb,
   updateSetting as updateSettingInDb,
   updateSettings as updateSettingsInDb,
 } from "@/lib/supabase";

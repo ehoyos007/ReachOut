@@ -3,9 +3,11 @@ import Home from '@/app/page';
 
 // Mock next/link
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
+  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => {
     return <a href={href}>{children}</a>;
   };
+  MockLink.displayName = 'MockLink';
+  return MockLink;
 });
 
 // Mock next/navigation for App Router components
@@ -23,7 +25,6 @@ jest.mock('next/navigation', () => ({
 }));
 
 // Mock the Supabase client with proper async behavior
-const mockFrom = jest.fn();
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     from: () => ({

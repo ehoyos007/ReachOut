@@ -1,11 +1,8 @@
 import type {
-  WorkflowExecution,
-  WorkflowEnrollment,
   NodeProcessorContext,
   ExecutionData,
 } from "@/types/execution";
-import type { WorkflowNode, WorkflowWithNodes } from "@/types/workflow";
-import type { ContactWithRelations } from "@/types/contact";
+import type { WorkflowWithNodes } from "@/types/workflow";
 import {
   getExecution,
   getExecutionWithDetails,
@@ -39,7 +36,6 @@ export interface ExecutionResult {
 export async function processExecution(
   executionId: string
 ): Promise<ExecutionResult> {
-  const startTime = Date.now();
   let nodesProcessed = 0;
 
   try {

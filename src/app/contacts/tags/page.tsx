@@ -78,7 +78,7 @@ export default function TagsManagementPage() {
       return;
     }
     fetchTags();
-  }, []);
+  }, [fetchTags]);
 
   const openCreateDialog = () => {
     setEditingTag(null);

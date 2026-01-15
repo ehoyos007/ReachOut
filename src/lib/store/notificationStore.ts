@@ -1,9 +1,5 @@
 import { create } from "zustand";
-import type {
-  Notification,
-  NotificationWithRelations,
-  CreateNotificationInput,
-} from "@/types/notification";
+import type { NotificationWithRelations } from "@/types/notification";
 
 interface NotificationState {
   // Data

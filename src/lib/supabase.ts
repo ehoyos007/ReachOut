@@ -690,7 +690,6 @@ export async function deleteTag(id: string): Promise<void> {
 
 import type {
   Template,
-  TemplateChannel,
   TemplateFilters,
   CreateTemplateInput,
   UpdateTemplateInput,
@@ -1043,7 +1042,6 @@ export async function getContactTimeline(
   options?: { before?: string; limit?: number; includeCreated?: boolean }
 ): Promise<TimelineResponse> {
   const limit = options?.limit ?? 30;
-  const includeCreated = options?.includeCreated ?? true;
 
   // Fetch both sources in parallel
   const [messagesResult, eventsResult] = await Promise.all([
@@ -1185,7 +1183,6 @@ import type {
   EnrollmentStatus,
   ExecutionStatus,
   EnrollmentFilters,
-  ExecutionFilters,
   ExecutionData,
 } from "@/types/execution";
 
@@ -1545,7 +1542,6 @@ import type {
   Notification,
   NotificationWithRelations,
   CreateNotificationInput,
-  UpdateNotificationInput,
 } from "@/types/notification";
 
 export async function getNotifications(

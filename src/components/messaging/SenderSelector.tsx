@@ -58,7 +58,7 @@ export function SenderSelector({
     if (!selectedId && defaultSender) {
       onSelect(defaultSender.id);
     }
-  }, [channel, defaultSender?.id]);
+  }, [channel, defaultSender, selectedId, onSelect]);
 
   const handleChange = (value: string) => {
     onSelect(value === "none" ? null : value);

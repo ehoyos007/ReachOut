@@ -5,11 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Plus,
-  MoreHorizontal,
   Pencil,
   Trash2,
   Power,
-  Copy,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

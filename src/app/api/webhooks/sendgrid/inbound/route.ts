@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
 
     const from = formData.get("from") as string;
-    const to = formData.get("to") as string;
     const subject = formData.get("subject") as string;
     const text = formData.get("text") as string;
     const html = formData.get("html") as string;

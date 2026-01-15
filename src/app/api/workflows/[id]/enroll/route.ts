@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { enrollContacts } from "@/lib/workflow-executor";
-import { getWorkflow, getContact } from "@/lib/supabase";
+import { getWorkflow } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
