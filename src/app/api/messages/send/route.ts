@@ -18,6 +18,10 @@ import type {
   MessageFromIdentity,
 } from "@/types/message";
 import type { SenderEmail, SenderPhone } from "@/types/sender";
+import {
+  replacePlaceholders,
+  contactToPlaceholderValues,
+} from "@/types/template";
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +67,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Resolve placeholders in message body and subject
+    const placeholderValues = contactToPlaceholderValues(contact);
+    const resolvedBody = replacePlaceholders(input.body, placeholderValues);
+    const resolvedSubject = input.subject
+      ? replacePlaceholders(input.subject, placeholderValues)
+      : null;
+
     // Determine sender identity
     let fromIdentity: MessageFromIdentity | null = null;
     if (input.from_identity_id) {
@@ -82,14 +93,15 @@ export async function POST(request: NextRequest) {
     const isScheduled =
       input.scheduled_at && new Date(input.scheduled_at) > new Date();
 
-    // Create message record
+    // Create message record with resolved placeholders
     const messageInput: CreateMessageInput = {
       contact_id: input.contact_id,
       channel: input.channel,
       direction: "outbound",
-      subject: input.subject || null,
-      body: input.body,
+      subject: resolvedSubject,
+      body: resolvedBody,
       status: isScheduled ? "scheduled" : "queued",
+      source: input.source || "manual", // Default to manual if not specified
       template_id: input.template_id || null,
       scheduled_at: input.scheduled_at || null,
       from_identity: fromIdentity,
@@ -141,10 +153,10 @@ export async function POST(request: NextRequest) {
         status: "sending",
       });
 
-      // Send SMS
+      // Send SMS with resolved placeholders
       const result = await sendSms(twilioSettings, {
         to: contact.phone!,
-        body: input.body,
+        body: resolvedBody,
       });
 
       if (result.success) {
@@ -207,11 +219,11 @@ export async function POST(request: NextRequest) {
         status: "sending",
       });
 
-      // Send Email
+      // Send Email with resolved placeholders
       const result = await sendEmail(sendGridSettings, {
         to: contact.email!,
-        subject: input.subject || "Message from ReachOut",
-        body: input.body,
+        subject: resolvedSubject || "Message from ReachOut",
+        body: resolvedBody,
       });
 
       if (result.success) {
