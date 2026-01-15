@@ -2367,3 +2367,151 @@ export async function reorderSavedViews(
     if (error) throw error;
   }
 }
+
+// =============================================================================
+// Email Template Cache Functions
+// =============================================================================
+
+/**
+ * Cached email template from database
+ */
+export interface DbEmailTemplate {
+  id: string;
+  sendgrid_id: string;
+  name: string;
+  subject: string | null;
+  variables: string[];
+  thumbnail_url: string | null;
+  is_active: boolean;
+  synced_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Get all cached email templates
+ */
+export async function getCachedEmailTemplates(): Promise<DbEmailTemplate[]> {
+  const { data, error } = await getSupabase()
+    .from("email_templates")
+    .select("*")
+    .eq("is_active", true)
+    .order("name");
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get a cached email template by SendGrid ID
+ */
+export async function getCachedEmailTemplate(
+  sendgridId: string
+): Promise<DbEmailTemplate | null> {
+  const { data, error } = await getSupabase()
+    .from("email_templates")
+    .select("*")
+    .eq("sendgrid_id", sendgridId)
+    .single();
+
+  if (error && error.code !== "PGRST116") throw error; // PGRST116 = no rows
+  return data || null;
+}
+
+/**
+ * Input for upserting a cached template
+ */
+export interface UpsertCachedTemplateInput {
+  sendgrid_id: string;
+  name: string;
+  subject?: string | null;
+  variables?: string[];
+  thumbnail_url?: string | null;
+  is_active?: boolean;
+}
+
+/**
+ * Upsert (create or update) a cached email template
+ */
+export async function upsertCachedEmailTemplate(
+  input: UpsertCachedTemplateInput
+): Promise<DbEmailTemplate> {
+  const { data, error } = await getSupabase()
+    .from("email_templates")
+    .upsert(
+      {
+        sendgrid_id: input.sendgrid_id,
+        name: input.name,
+        subject: input.subject || null,
+        variables: input.variables || [],
+        thumbnail_url: input.thumbnail_url || null,
+        is_active: input.is_active ?? true,
+        synced_at: new Date().toISOString(),
+      },
+      { onConflict: "sendgrid_id" }
+    )
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Sync multiple templates to cache
+ */
+export async function syncEmailTemplatesToCache(
+  templates: UpsertCachedTemplateInput[]
+): Promise<DbEmailTemplate[]> {
+  if (templates.length === 0) return [];
+
+  const { data, error } = await getSupabase()
+    .from("email_templates")
+    .upsert(
+      templates.map((t) => ({
+        sendgrid_id: t.sendgrid_id,
+        name: t.name,
+        subject: t.subject || null,
+        variables: t.variables || [],
+        thumbnail_url: t.thumbnail_url || null,
+        is_active: t.is_active ?? true,
+        synced_at: new Date().toISOString(),
+      })),
+      { onConflict: "sendgrid_id" }
+    )
+    .select();
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Get the most recent sync timestamp
+ */
+export async function getLastTemplateSyncTime(): Promise<string | null> {
+  const { data, error } = await getSupabase()
+    .from("email_templates")
+    .select("synced_at")
+    .order("synced_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== "PGRST116") throw error;
+  return data?.synced_at || null;
+}
+
+/**
+ * Mark templates as inactive (soft delete)
+ */
+export async function deactivateEmailTemplates(
+  sendgridIds: string[]
+): Promise<void> {
+  if (sendgridIds.length === 0) return;
+
+  const { error } = await getSupabase()
+    .from("email_templates")
+    .update({ is_active: false })
+    .in("sendgrid_id", sendgridIds);
+
+  if (error) throw error;
+}
