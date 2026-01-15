@@ -7,6 +7,7 @@ import {
   GitBranch,
   Users,
   FileText,
+  Clock,
   Settings,
   Bell,
   X,
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/workflows", label: "Workflows", icon: GitBranch },
   { href: "/contacts", label: "Contacts", icon: Users },
   { href: "/templates", label: "Templates", icon: FileText },
+  { href: "/scheduled-messages", label: "Scheduled", icon: Clock },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
