@@ -4,6 +4,62 @@
 
 ---
 
+## January 15, 2026 — Session 25
+
+### Summary
+Implemented Contact Activity Timeline feature - Replaced chat view with vertical timeline showing all contact events (messages, calls, notes, status changes) with pagination and manual event logging.
+
+### Completed
+- [x] Created database migration for contact_events table (`009_create_contact_events_table.sql`)
+- [x] Defined TypeScript types for timeline events, event configs, and metadata
+- [x] Built timeline utility functions (date grouping, event merging, formatting)
+- [x] Added contact_events CRUD operations to Supabase client
+- [x] Created `ContactTimeline` component (main timeline wrapper)
+- [x] Created `TimelineEvent` component (individual event cards with expand/collapse)
+- [x] Created `TimelineEventIcon` component (icon mapper by event type)
+- [x] Created `LogEventModal` component (manual event logging with call duration, backdating)
+- [x] Created `useContactTimeline` hook with pagination and auto-refresh on focus
+- [x] Created API endpoints:
+  - `GET /api/contacts/[id]/timeline` - Fetch paginated timeline
+  - `GET/POST /api/contacts/[id]/events` - Event CRUD
+- [x] Replaced MessageThread with ContactTimeline on contact detail page
+- [x] Added scheduled message time display in timeline events
+- [x] Build compiles successfully
+- [x] Committed and pushed to main (b23ac32)
+
+### Files Changed
+- `supabase/migrations/009_create_contact_events_table.sql` — New: contact_events table with indexes and RLS
+- `src/types/timeline.ts` — New: TimelineEvent, ContactEvent, EventTypeConfig types
+- `src/lib/timeline-utils.ts` — New: Date formatting, event merging, grouping utilities
+- `src/lib/supabase.ts` — Extended: Added contact_events CRUD and timeline fetching
+- `src/hooks/useContactTimeline.ts` — New: Data fetching hook with pagination
+- `src/components/contacts/ContactTimeline.tsx` — New: Main timeline component
+- `src/components/contacts/TimelineEvent.tsx` — New: Individual event display
+- `src/components/contacts/TimelineEventIcon.tsx` — New: Icon mapper component
+- `src/components/contacts/LogEventModal.tsx` — New: Manual event logging modal
+- `src/app/api/contacts/[id]/timeline/route.ts` — New: Timeline API endpoint
+- `src/app/api/contacts/[id]/events/route.ts` — New: Events CRUD endpoint
+- `src/app/contacts/[id]/page.tsx` — Updated: Replaced MessageThread with ContactTimeline
+- `PLAN.md` — Updated: Added Contact Activity Timeline feature plan
+
+### Decisions Made
+- **Hybrid data approach:** Events stored in contact_events table, messages in messages table, merged at query time
+- **Forward-only tracking:** Tag/status change events tracked from implementation date, no backfill
+- **Auto-refresh on focus:** Timeline refreshes when user returns to page/tab
+- **Cursor-based pagination:** Using created_at timestamp as cursor for efficient pagination
+- **Expandable events:** Click-to-expand pattern for viewing full event details
+
+### Blockers / Issues Encountered
+- **Linter overwrote LogEventModal:** Initial complete implementation was replaced by simpler stub; restored full version
+- **Unused imports:** Fixed TimelineEvent, normalizeContactEvents, normalizeMessages imports in supabase.ts
+
+### Next Steps
+- [ ] Test timeline with real data end-to-end
+- [ ] Add tag/status change event tracking when those actions occur
+- [ ] Consider adding workflow enrollment events to timeline
+
+---
+
 ## January 15, 2026 — Session 24
 
 ### Summary
@@ -1238,4 +1294,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 24)
+**Last Updated:** January 15, 2026 (Session 25)
