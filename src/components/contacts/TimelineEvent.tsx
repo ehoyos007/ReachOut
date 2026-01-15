@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronUp, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { TimelineEventIcon } from "./TimelineEventIcon";
@@ -112,6 +112,11 @@ export function TimelineEvent({ event, isLast = false }: TimelineEventProps) {
                 Received
               </Badge>
             )}
+            {event.message?.status === "scheduled" && event.message.scheduled_at && (
+              <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+                Scheduled for {formatFullTimestamp(event.message.scheduled_at)}
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <span className="text-xs text-gray-500">
@@ -165,6 +170,12 @@ export function TimelineEvent({ event, isLast = false }: TimelineEventProps) {
                   <p className="text-red-600">
                     <span className="font-medium">Error:</span>{" "}
                     {event.message.provider_error}
+                  </p>
+                )}
+                {event.message.scheduled_at && (
+                  <p>
+                    <span className="font-medium">Scheduled for:</span>{" "}
+                    {formatFullTimestamp(event.message.scheduled_at)}
                   </p>
                 )}
                 {event.message.sent_at && (

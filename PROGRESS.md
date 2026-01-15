@@ -4,6 +4,46 @@
 
 ---
 
+## January 15, 2026 — Session 24
+
+### Summary
+Fixed TypeScript build errors preventing Vercel deployment - Set iteration, type casting, and missing component issues.
+
+### Completed
+- [x] Fixed Set iteration errors using `Array.from()` instead of spread operator
+- [x] Added `BooleanOperator` type for filter boolean fields
+- [x] Added `style` prop to `IconByName` component
+- [x] Fixed `FilterOperator` return type in `getDefaultOperator()` function
+- [x] Created missing `LogEventModal` component
+- [x] Fixed `ComposeMessageModal` prop names in `ContactTimeline`
+- [x] Added `as unknown` type assertion for LucideIcons
+- [x] Build compiles successfully
+- [x] Committed and pushed to main (31b4cfa)
+
+### Files Changed
+- `src/app/contacts/page.tsx` — Fixed Set spread to Array.from
+- `src/components/contacts/BulkTagModal.tsx` — Fixed Set spread to Array.from
+- `src/lib/timeline-utils.ts` — Fixed Map iteration to Array.from
+- `src/components/contacts/ContactFilterBuilder.tsx` — Added style prop to IconByName, fixed type casting
+- `src/hooks/useContactFilters.ts` — Fixed FilterOperator return type
+- `src/types/contact.ts` — Added BooleanOperator type and BOOLEAN_OPERATORS array
+- `src/components/contacts/LogEventModal.tsx` — New: Created missing component
+- `src/components/contacts/ContactTimeline.tsx` — Fixed ComposeMessageModal props
+
+### Decisions Made
+- **Array.from() over spread:** Safer approach that doesn't require tsconfig changes
+- **BooleanOperator type:** Added missing operator type for do_not_contact field filtering
+
+### Blockers / Issues Encountered
+- **Cascading errors:** Initial Set fix revealed additional type issues that needed fixing
+- **Missing component:** LogEventModal was imported but never created
+
+### Next Steps
+- [ ] Address 50+ ESLint warnings (unused imports, missing deps) in follow-up
+- [ ] Test saved views and bulk actions end-to-end
+
+---
+
 ## January 15, 2026 — Session 23
 
 ### Summary
@@ -1198,4 +1238,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 23)
+**Last Updated:** January 15, 2026 (Session 24)

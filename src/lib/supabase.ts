@@ -963,13 +963,10 @@ export async function getMessageCount(filters?: MessageFilters): Promise<number>
 import type {
   ContactEvent,
   CreateContactEventInput,
-  TimelineEvent,
   TimelineResponse,
 } from "@/types/timeline";
 import {
   mergeAndSortEvents,
-  normalizeContactEvents,
-  normalizeMessages,
   createContactCreatedEvent,
 } from "@/lib/timeline-utils";
 
