@@ -7,6 +7,7 @@ import type {
   SendEmailData,
   UpdateStatusData,
   StopOnReplyData,
+  ReturnToParentData,
   ComparisonOperator,
   ChannelType,
 } from "@/types/workflow";
@@ -572,6 +573,44 @@ export const stopOnReplyProcessor: NodeProcessor = {
 };
 
 // =============================================================================
+// Return to Parent Processor
+// =============================================================================
+
+/**
+ * Return to Parent Node - Returns data to the parent workflow (for sub-workflows)
+ */
+export const returnToParentProcessor: NodeProcessor = {
+  async execute(node): Promise<NodeProcessorResult> {
+    const data = node.data as ReturnToParentData;
+
+    // In a real implementation, this would:
+    // 1. Look up the parent execution context
+    // 2. Serialize the output variables
+    // 3. Signal the parent workflow to resume
+    // For now, we just mark this as a terminal node
+
+    const outputVariables: Record<string, unknown> = {};
+    for (const variable of data.outputVariables || []) {
+      // In a real implementation, we'd evaluate the value expression
+      // For now, just store the raw value reference
+      outputVariables[variable.name] = variable.value;
+    }
+
+    // Return to parent is always a terminal node
+    return {
+      nextNodeId: null, // Terminal node
+      nextRunAt: null,
+      outputData: {
+        action: "return_to_parent",
+        returnStatus: data.returnStatus,
+        customStatusField: data.customStatusField,
+        outputVariables,
+      },
+    };
+  },
+};
+
+// =============================================================================
 // Processor Registry
 // =============================================================================
 
@@ -583,6 +622,7 @@ export const nodeProcessors: Record<WorkflowNodeType, NodeProcessor> = {
   send_email: sendEmailProcessor,
   update_status: updateStatusProcessor,
   stop_on_reply: stopOnReplyProcessor,
+  return_to_parent: returnToParentProcessor,
 };
 
 /**

@@ -8,7 +8,8 @@ export type WorkflowNodeType =
   | "send_sms"
   | "send_email"
   | "update_status"
-  | "stop_on_reply";
+  | "stop_on_reply"
+  | "return_to_parent";
 
 // Time units for delays
 export type TimeUnit = "minutes" | "hours" | "days";
@@ -36,6 +37,137 @@ export type ContactStatus =
 export type ChannelType = "any" | "sms" | "email";
 
 // =============================================================================
+// Trigger Type Definitions
+// =============================================================================
+
+export type TriggerType =
+  | "manual"
+  | "contact_added"
+  | "tag_added"
+  | "scheduled"
+  | "status_changed"
+  | "sub_workflow";
+
+// Schedule frequency options
+export type ScheduleFrequency = "daily" | "weekly" | "monthly";
+
+// Days of week (0 = Sunday, 6 = Saturday)
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+// Variable types for sub-workflow inputs/outputs
+export type VariableType = "string" | "number" | "boolean" | "object" | "array";
+
+// Sub-workflow execution modes
+export type ExecutionMode = "sync" | "async";
+
+// Input variable definition for sub-workflows
+export interface InputVariable {
+  name: string;
+  type: VariableType;
+  description?: string;
+  required?: boolean;
+  defaultValue?: unknown;
+}
+
+// Output variable definition for return to parent
+export interface OutputVariable {
+  name: string;
+  type: VariableType;
+  value: string; // Expression or field reference
+}
+
+// --- Trigger Configuration Types (Discriminated Union) ---
+
+export interface ManualTriggerConfig {
+  type: "manual";
+}
+
+export interface ContactAddedTriggerConfig {
+  type: "contact_added";
+}
+
+export interface TagAddedTriggerConfig {
+  type: "tag_added";
+  tagIds: string[];
+  matchMode: "any" | "all";
+}
+
+export interface ScheduledTriggerConfig {
+  type: "scheduled";
+  scheduleType: "once" | "recurring";
+  // One-time execution
+  runAt?: string; // ISO date string
+  // Recurring execution
+  frequency?: ScheduleFrequency;
+  time?: string; // HH:mm format
+  daysOfWeek?: DayOfWeek[]; // For weekly frequency
+  dayOfMonth?: number; // For monthly frequency (1-31)
+  timezone?: string; // IANA timezone
+}
+
+export interface StatusChangedTriggerConfig {
+  type: "status_changed";
+  statuses: ContactStatus[];
+}
+
+export interface SubWorkflowTriggerConfig {
+  type: "sub_workflow";
+  inputVariables: InputVariable[];
+  executionMode: ExecutionMode;
+}
+
+// Union of all trigger configs
+export type TriggerConfig =
+  | ManualTriggerConfig
+  | ContactAddedTriggerConfig
+  | TagAddedTriggerConfig
+  | ScheduledTriggerConfig
+  | StatusChangedTriggerConfig
+  | SubWorkflowTriggerConfig;
+
+// Display names for trigger types
+export const TRIGGER_TYPE_DISPLAY_NAMES: Record<TriggerType, string> = {
+  manual: "Manual",
+  contact_added: "When Contact Added",
+  tag_added: "When Tag Added",
+  scheduled: "Scheduled",
+  status_changed: "When Status Changes",
+  sub_workflow: "Sub-Workflow",
+};
+
+// Descriptions for trigger types
+export const TRIGGER_TYPE_DESCRIPTIONS: Record<TriggerType, string> = {
+  manual: "Start workflow manually by clicking Run",
+  contact_added: "Triggers when a new contact is created",
+  tag_added: "Triggers when specific tags are added to a contact",
+  scheduled: "Triggers at scheduled times or intervals",
+  status_changed: "Triggers when contact status changes to specified values",
+  sub_workflow: "Called by another workflow as a reusable component",
+};
+
+// Day of week display names
+export const DAY_OF_WEEK_NAMES: Record<DayOfWeek, string> = {
+  0: "Sunday",
+  1: "Monday",
+  2: "Tuesday",
+  3: "Wednesday",
+  4: "Thursday",
+  5: "Friday",
+  6: "Saturday",
+};
+
+// Short day names
+export const DAY_OF_WEEK_SHORT: Record<DayOfWeek, string> = {
+  0: "Sun",
+  1: "Mon",
+  2: "Tue",
+  3: "Wed",
+  4: "Thu",
+  5: "Fri",
+  6: "Sat",
+};
+
+// =============================================================================
 // Node Data Types
 // =============================================================================
 
@@ -46,6 +178,7 @@ interface BaseNodeData {
 
 export interface TriggerStartData extends BaseNodeData {
   label: string;
+  triggerConfig: TriggerConfig;
 }
 
 export interface TimeDelayData extends BaseNodeData {
@@ -86,6 +219,13 @@ export interface StopOnReplyData extends BaseNodeData {
   channel: ChannelType;
 }
 
+export interface ReturnToParentData extends BaseNodeData {
+  label: string;
+  outputVariables: OutputVariable[];
+  returnStatus: "success" | "failure" | "custom";
+  customStatusField?: string;
+}
+
 // Union type for all node data
 export type WorkflowNodeData =
   | TriggerStartData
@@ -94,7 +234,8 @@ export type WorkflowNodeData =
   | SendSmsData
   | SendEmailData
   | UpdateStatusData
-  | StopOnReplyData;
+  | StopOnReplyData
+  | ReturnToParentData;
 
 // =============================================================================
 // React Flow Node Types
@@ -107,6 +248,7 @@ export type SendSmsNode = Node<SendSmsData, "send_sms">;
 export type SendEmailNode = Node<SendEmailData, "send_email">;
 export type UpdateStatusNode = Node<UpdateStatusData, "update_status">;
 export type StopOnReplyNode = Node<StopOnReplyData, "stop_on_reply">;
+export type ReturnToParentNode = Node<ReturnToParentData, "return_to_parent">;
 
 export type WorkflowNode =
   | TriggerStartNode
@@ -115,7 +257,8 @@ export type WorkflowNode =
   | SendSmsNode
   | SendEmailNode
   | UpdateStatusNode
-  | StopOnReplyNode;
+  | StopOnReplyNode
+  | ReturnToParentNode;
 
 // =============================================================================
 // Workflow Types
@@ -189,7 +332,10 @@ export const NODE_TYPE_CONFIGS: NodeTypeConfig[] = [
     description: "Entry point for the workflow",
     icon: "Play",
     category: "trigger",
-    defaultData: { label: "Start" },
+    defaultData: {
+      label: "Start",
+      triggerConfig: { type: "manual" },
+    } as TriggerStartData,
   },
   {
     type: "time_delay",
@@ -256,6 +402,18 @@ export const NODE_TYPE_CONFIGS: NodeTypeConfig[] = [
     category: "logic",
     defaultData: { label: "Stop if replied", channel: "any" },
   },
+  {
+    type: "return_to_parent",
+    label: "Return to Parent",
+    description: "Return data to parent workflow",
+    icon: "CornerUpLeft",
+    category: "action",
+    defaultData: {
+      label: "Return to Parent",
+      outputVariables: [],
+      returnStatus: "success",
+    } as ReturnToParentData,
+  },
 ];
 
 // =============================================================================
@@ -318,3 +476,55 @@ export const OPERATOR_DISPLAY_NAMES: Record<ComparisonOperator, string> = {
   is_empty: "is empty",
   is_not_empty: "is not empty",
 };
+
+// Format trigger config for display
+export function formatTriggerConfig(config: TriggerConfig): string {
+  switch (config.type) {
+    case "manual":
+      return "Click Run to start";
+    case "contact_added":
+      return "When contact is created";
+    case "tag_added": {
+      const tagCount = config.tagIds.length;
+      if (tagCount === 0) return "Select tags to watch";
+      const mode = config.matchMode === "all" ? "all of" : "any of";
+      return `When ${mode} ${tagCount} tag${tagCount > 1 ? "s" : ""} added`;
+    }
+    case "scheduled": {
+      if (config.scheduleType === "once") {
+        if (!config.runAt) return "Set date and time";
+        return `Once at ${new Date(config.runAt).toLocaleDateString()}`;
+      }
+      if (!config.frequency || !config.time) return "Set schedule";
+      const timeStr = config.time;
+      switch (config.frequency) {
+        case "daily":
+          return `Daily at ${timeStr}`;
+        case "weekly": {
+          const days = config.daysOfWeek || [];
+          if (days.length === 0) return "Select days";
+          const dayNames = days.map((d) => DAY_OF_WEEK_SHORT[d]).join(", ");
+          return `${dayNames} at ${timeStr}`;
+        }
+        case "monthly":
+          return `Monthly on day ${config.dayOfMonth || "?"} at ${timeStr}`;
+        default:
+          return "Set schedule";
+      }
+    }
+    case "status_changed": {
+      const statusCount = config.statuses.length;
+      if (statusCount === 0) return "Select statuses to watch";
+      if (statusCount === 1)
+        return `When status is ${STATUS_DISPLAY_NAMES[config.statuses[0]]}`;
+      return `When status is any of ${statusCount} values`;
+    }
+    case "sub_workflow": {
+      const inputCount = config.inputVariables.length;
+      const mode = config.executionMode === "sync" ? "Sync" : "Async";
+      return `${mode}, ${inputCount} input${inputCount !== 1 ? "s" : ""}`;
+    }
+    default:
+      return "Configure trigger";
+  }
+}

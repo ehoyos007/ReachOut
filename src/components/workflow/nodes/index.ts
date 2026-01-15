@@ -5,3 +5,4 @@ export { SendSmsNode } from "./SendSmsNode";
 export { SendEmailNode } from "./SendEmailNode";
 export { UpdateStatusNode } from "./UpdateStatusNode";
 export { StopOnReplyNode } from "./StopOnReplyNode";
+export { ReturnToParentNode } from "./ReturnToParentNode";

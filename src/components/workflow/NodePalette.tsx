@@ -9,6 +9,7 @@ import {
   Mail,
   UserCheck,
   StopCircle,
+  CornerUpLeft,
   LucideIcon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,6 +25,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Mail,
   UserCheck,
   StopCircle,
+  CornerUpLeft,
 };
 
 interface NodePaletteItem {
@@ -112,6 +114,14 @@ const NODE_CATEGORIES: {
         icon: "UserCheck",
         iconColor: "text-teal-600",
         iconBgColor: "bg-teal-100",
+      },
+      {
+        type: "return_to_parent",
+        label: "Return to Parent",
+        description: "Return to parent workflow",
+        icon: "CornerUpLeft",
+        iconColor: "text-indigo-600",
+        iconBgColor: "bg-indigo-100",
       },
     ],
   },

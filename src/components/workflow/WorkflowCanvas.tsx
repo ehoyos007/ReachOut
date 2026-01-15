@@ -27,6 +27,7 @@ import {
   SendEmailNode,
   UpdateStatusNode,
   StopOnReplyNode,
+  ReturnToParentNode,
 } from "./nodes";
 import type { WorkflowNodeType } from "@/types/workflow";
 import { Save, Power, Loader2, ArrowLeft, Users } from "lucide-react";
@@ -40,6 +41,7 @@ const nodeTypes = {
   send_email: SendEmailNode,
   update_status: UpdateStatusNode,
   stop_on_reply: StopOnReplyNode,
+  return_to_parent: ReturnToParentNode,
 };
 
 function WorkflowCanvasInner() {
@@ -227,6 +229,8 @@ function WorkflowCanvasInner() {
                       return "#14b8a6";
                     case "stop_on_reply":
                       return "#ef4444";
+                    case "return_to_parent":
+                      return "#818cf8";
                     default:
                       return "#6b7280";
                   }
