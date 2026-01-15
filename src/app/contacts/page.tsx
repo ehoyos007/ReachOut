@@ -134,8 +134,6 @@ export default function ContactsPage() {
     deleteSelectedContacts,
     setPage,
     selectContact,
-    deselectContact,
-    selectAllContacts,
     deselectAllContacts,
     toggleContactSelection,
     setError,
@@ -144,7 +142,7 @@ export default function ContactsPage() {
 
   // Advanced filter state
   const filterState = useContactFilters();
-  const { filters, loadFilters, hasFilters, filterCount } = filterState;
+  const { filters, loadFilters, hasFilters } = filterState;
 
   // Saved views state
   const savedViewsState = useSavedViews();
@@ -159,7 +157,7 @@ export default function ContactsPage() {
 
     fetchContacts();
     fetchTags();
-  }, []);
+  }, [fetchContacts, fetchTags]);
 
   // Apply advanced filters to contacts
   const filteredContacts = useMemo(() => {
@@ -272,28 +270,36 @@ export default function ContactsPage() {
 
   // Handle bulk SMS
   const handleBulkSms = async (message: string, contactIds: string[]): Promise<{ sent: number; failed: number }> => {
-    // For now, this is a placeholder - actual SMS sending would go through the API
-    try {
-      const response = await fetch("/api/messages/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel: "sms",
-          message,
-          contactIds,
-        }),
-      });
+    let sent = 0;
+    let failed = 0;
 
-      if (!response.ok) {
-        throw new Error("Failed to send messages");
+    // Send messages one at a time to each contact
+    for (const contactId of contactIds) {
+      try {
+        const response = await fetch("/api/messages/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contact_id: contactId,
+            channel: "sms",
+            body: message,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          sent++;
+        } else {
+          console.error(`Failed to send SMS to contact ${contactId}:`, result.error);
+          failed++;
+        }
+      } catch (error) {
+        console.error(`Error sending SMS to contact ${contactId}:`, error);
+        failed++;
       }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error("Bulk SMS error:", error);
-      return { sent: 0, failed: contactIds.length };
     }
+
+    return { sent, failed };
   };
 
   // Handle bulk email
@@ -302,28 +308,37 @@ export default function ContactsPage() {
     body: string,
     contactIds: string[]
   ): Promise<{ sent: number; failed: number }> => {
-    try {
-      const response = await fetch("/api/messages/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          channel: "email",
-          subject,
-          body,
-          contactIds,
-        }),
-      });
+    let sent = 0;
+    let failed = 0;
 
-      if (!response.ok) {
-        throw new Error("Failed to send emails");
+    // Send emails one at a time to each contact
+    for (const contactId of contactIds) {
+      try {
+        const response = await fetch("/api/messages/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contact_id: contactId,
+            channel: "email",
+            subject,
+            body,
+          }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+          sent++;
+        } else {
+          console.error(`Failed to send email to contact ${contactId}:`, result.error);
+          failed++;
+        }
+      } catch (error) {
+        console.error(`Error sending email to contact ${contactId}:`, error);
+        failed++;
       }
-
-      const result = await response.json();
-      return result;
-    } catch (error) {
-      console.error("Bulk email error:", error);
-      return { sent: 0, failed: contactIds.length };
     }
+
+    return { sent, failed };
   };
 
   // Handle create tag (for bulk tag modal)
@@ -334,8 +349,6 @@ export default function ContactsPage() {
   // Selection helpers
   const allSelected =
     filteredContacts.length > 0 && selectedContactIds.size === filteredContacts.length;
-  const someSelected =
-    selectedContactIds.size > 0 && selectedContactIds.size < filteredContacts.length;
 
   // Date formatter
   const formatDate = (dateString: string) => {
