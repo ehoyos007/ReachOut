@@ -60,6 +60,7 @@ import type {
 export default function SettingsPage() {
   const [supabaseReady, setSupabaseReady] = useState(true);
   const [activeTab, setActiveTab] = useState<"twilio" | "sendgrid" | "senders">("twilio");
+  const [baseUrl, setBaseUrl] = useState("");
 
   // Form state for each setting
   const [formValues, setFormValues] = useState<Record<SettingKey, string>>(
@@ -125,6 +126,11 @@ export default function SettingsPage() {
     removeEmail,
     removePhone,
   } = useSenderStore();
+
+  // Set base URL on client mount (avoids hydration mismatch)
+  useEffect(() => {
+    setBaseUrl(window.location.origin);
+  }, []);
 
   // Check Supabase configuration
   useEffect(() => {
@@ -920,33 +926,25 @@ export default function SettingsPage() {
           <div className="space-y-2">
             <Label className="text-sm font-medium">Twilio SMS Webhook</Label>
             <code className="block p-3 bg-muted rounded-md text-sm">
-              {typeof window !== "undefined"
-                ? `${window.location.origin}/api/webhooks/twilio/inbound`
-                : "/api/webhooks/twilio/inbound"}
+              {baseUrl}/api/webhooks/twilio/inbound
             </code>
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-medium">Twilio Status Callback</Label>
             <code className="block p-3 bg-muted rounded-md text-sm">
-              {typeof window !== "undefined"
-                ? `${window.location.origin}/api/webhooks/twilio/status`
-                : "/api/webhooks/twilio/status"}
+              {baseUrl}/api/webhooks/twilio/status
             </code>
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-medium">SendGrid Inbound Parse</Label>
             <code className="block p-3 bg-muted rounded-md text-sm">
-              {typeof window !== "undefined"
-                ? `${window.location.origin}/api/webhooks/sendgrid/inbound`
-                : "/api/webhooks/sendgrid/inbound"}
+              {baseUrl}/api/webhooks/sendgrid/inbound
             </code>
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-medium">SendGrid Event Webhook</Label>
             <code className="block p-3 bg-muted rounded-md text-sm">
-              {typeof window !== "undefined"
-                ? `${window.location.origin}/api/webhooks/sendgrid/events`
-                : "/api/webhooks/sendgrid/events"}
+              {baseUrl}/api/webhooks/sendgrid/events
             </code>
           </div>
         </CardContent>
