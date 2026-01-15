@@ -4,6 +4,33 @@
 
 ---
 
+## January 14, 2026 — Session 19
+
+### Summary
+Quick session - Added Scheduled Messages link to sidebar navigation.
+
+### Completed
+- [x] Added "Scheduled" nav item to sidebar with Clock icon
+- [x] Positioned between Templates and Settings
+- [x] User ran migration 007 in Supabase (scheduling features enabled)
+- [x] Committed and pushed to main
+
+### Files Changed
+- `src/components/layout/Sidebar.tsx` — Added Clock icon import and Scheduled Messages nav item
+
+### Decisions Made
+- **Nav label:** Used "Scheduled" (shorter) instead of "Scheduled Messages" for cleaner sidebar
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Add sender identities UI in Settings page
+- [ ] Test scheduling flow end-to-end
+- [ ] Phase 2: Conditional Tagging in Import Wizard (future enhancement)
+
+---
+
 ## January 14, 2026 — Session 18
 
 ### Summary
@@ -995,4 +1022,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 18)
+**Last Updated:** January 14, 2026 (Session 19)

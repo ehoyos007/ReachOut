@@ -13,6 +13,10 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ## To Do
 
+### Scheduling Features (Post-MVP)
+- [ ] Add sender identities UI in Settings page
+- [ ] Test scheduling flow end-to-end
+
 ### Feature: Bulk Tag Assignment in Import Wizard
 
 **Phase 2: Conditional Tagging (Future Enhancement)**
@@ -281,4 +285,4 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 16)
+**Last Updated:** January 14, 2026 (Session 19)
