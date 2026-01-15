@@ -4,6 +4,74 @@
 
 ---
 
+## January 14, 2026 — Session 18
+
+### Summary
+Enhanced Send SMS/Email Modal - Complete 9-phase feature implementation adding dynamic placeholders, sender identities, template selection, message scheduling, and global scheduled messages page.
+
+### Completed
+- [x] **Phase 1: Database & Types** - Created migration for `scheduled_at`, `from_identity` columns; added `scheduled` status
+- [x] **Phase 2: Backend APIs** - Created 6 new API endpoints:
+  - `/api/messages/send` - Updated for scheduling support
+  - `/api/cron/process-scheduled-messages` - Cron job to send due messages
+  - `/api/messages/scheduled` - List scheduled messages
+  - `/api/messages/scheduled/[id]` - Manage individual scheduled messages
+  - `/api/settings/sender-identities` - CRUD for sender identities
+  - `/api/settings/sender-identities/[id]` - Individual sender management
+- [x] **Phase 3: Placeholder System** - Built `PlaceholderInserter` and `MessagePreview` components
+- [x] **Phase 4: Template Selection** - Built `TemplateSelector` and `SaveTemplateDialog` components
+- [x] **Phase 5: Sender Selection** - Created `senderStore.ts` and `SenderSelector` component
+- [x] **Phase 6: Schedule Picker** - Built `SchedulePicker` with quick options and custom date/time
+- [x] **Phase 7: Main Modal** - Created `ComposeMessageModal` integrating all features
+- [x] **Phase 8: Scheduled Messages Page** - Built global `/scheduled-messages` page
+- [x] **Phase 9: Contact Thread Integration** - Added inline cancel for scheduled messages with purple styling
+- [x] Updated `vercel.json` with cron job for scheduled message processing
+- [x] All TypeScript and lint checks passing
+- [x] Committed and pushed to main (25 files, 3090 insertions)
+
+### Files Changed
+- `supabase/migrations/007_add_scheduling_and_sender_identities.sql` — New: Database schema for scheduling
+- `src/types/message.ts` — Updated: Added `scheduled_at`, `from_identity`, `scheduled` status
+- `src/types/sender.ts` — New: Sender identity types
+- `src/types/template.ts` — Updated: Added `getAllPlaceholders()`, `contactWithCustomFieldsToPlaceholderValues()`
+- `src/lib/store/senderStore.ts` — New: Zustand store for sender identity management
+- `src/components/messaging/PlaceholderInserter.tsx` — New: Insert placeholders at cursor
+- `src/components/messaging/MessagePreview.tsx` — New: Live preview with resolved values
+- `src/components/messaging/TemplateSelector.tsx` — New: Searchable template dropdown
+- `src/components/messaging/SaveTemplateDialog.tsx` — New: Save as template dialog
+- `src/components/messaging/SenderSelector.tsx` — New: Sender identity dropdown
+- `src/components/messaging/SchedulePicker.tsx` — New: Date/time picker with quick options
+- `src/components/messaging/ComposeMessageModal.tsx` — New: Main modal integrating all features
+- `src/components/messaging/index.ts` — New: Component exports
+- `src/components/contacts/MessageThread.tsx` — Updated: Scheduled message styling, inline cancel
+- `src/app/scheduled-messages/page.tsx` — New: Global scheduled messages dashboard
+- `src/app/api/messages/send/route.ts` — Updated: Support for scheduling
+- `src/app/api/cron/process-scheduled-messages/route.ts` — New: Cron processor
+- `src/app/api/messages/scheduled/route.ts` — New: List scheduled messages
+- `src/app/api/messages/scheduled/[id]/route.ts` — New: Individual scheduled message management
+- `src/app/api/settings/sender-identities/route.ts` — New: Sender identity CRUD
+- `src/app/api/settings/sender-identities/[id]/route.ts` — New: Individual sender management
+- `src/app/contacts/[id]/page.tsx` — Updated: Pass full contact to MessageThread
+- `vercel.json` — Updated: Added cron job for scheduled messages
+
+### Decisions Made
+- **Inline placeholders:** Used `{{field}}` format with cursor-position insertion
+- **Schedule picker:** Quick options (1hr, 3hr, Tomorrow 9 AM, Monday 8 AM) plus custom date/time picker
+- **Scheduled message styling:** Purple dashed border to visually distinguish from sent messages
+- **Inline cancel:** Cancel button directly on scheduled messages in thread view
+- **Sender identity storage:** JSON arrays in settings table for flexibility
+
+### Blockers / Issues Encountered
+- **EmptyState component:** `href` prop not supported, changed to `onClick` with router.push
+- **Set iteration:** TypeScript required `Array.from()` instead of spread operator for Set
+
+### Next Steps
+- [ ] Run migration 007 in Supabase to enable scheduling features
+- [ ] Add sender identities in Settings page
+- [ ] Test scheduling flow end-to-end
+
+---
+
 ## January 14, 2026 — Session 17
 
 ### Summary
@@ -927,4 +995,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 17)
+**Last Updated:** January 14, 2026 (Session 18)
