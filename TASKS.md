@@ -15,40 +15,7 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ### Feature: Bulk Tag Assignment in Import Wizard
 
-**Phase 1: Basic Bulk Tagging (MVP)**
-
-- [ ] **1.1 Add Tag State to Import Wizard**
-  - Add `selectedTagIds` state, fetch tags on mount via store
-  - File: `src/app/contacts/import/page.tsx`
-  - Effort: Small
-
-- [ ] **1.2 Create Tag Selector UI**
-  - Searchable multi-select dropdown with existing tags
-  - Display color indicators and removable badges
-  - File: `src/app/contacts/import/page.tsx`
-  - Effort: Medium
-
-- [ ] **1.3 Add Inline Tag Creation**
-  - "Create new tag" option with name + color picker
-  - Auto-select newly created tag
-  - Effort: Medium
-
-- [ ] **1.4 Update Preview Step**
-  - Show selected tags summary ("Apply X tags to Y contacts")
-  - Allow removing tags before confirmation
-  - Effort: Small
-
-- [ ] **1.5 Modify Import Execution**
-  - Pass `selectedTagIds` to each `createContact()` call
-  - Update completion summary
-  - Effort: Small
-
-- [ ] **1.6 Testing & Polish**
-  - Test scenarios: 0/1/many tags, inline creation, large imports
-  - Verify tags appear on imported contacts
-  - Effort: Medium
-
-**Phase 2: Conditional Tagging (Future)**
+**Phase 2: Conditional Tagging (Future Enhancement)**
 - [ ] Rule builder: "If [column] [operator] [value], apply [tag]"
 - [ ] Evaluate rules per row during import
 - [ ] Preview conditional results
@@ -61,6 +28,15 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 ---
 
 ## Done
+
+### Bulk Tag Assignment - Phase 1 (Completed Jan 14, 2026)
+- [x] Add tag state to import wizard (selectedTagIds, fetch tags on mount)
+- [x] Create searchable multi-select tag dropdown with color indicators
+- [x] Add inline tag creation with name + color picker
+- [x] Update Preview step with tags summary ("Apply X tags to Y contacts")
+- [x] Pass selectedTagIds to createContact() in import loop
+- [x] Show tags applied in completion summary
+- [x] Install shadcn/ui Collapsible component
 
 ### Phase 1: Project Foundation (Completed Jan 14, 2026)
 - [x] Initialize Next.js 14 project with TypeScript

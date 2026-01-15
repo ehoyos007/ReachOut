@@ -4,6 +4,45 @@
 
 ---
 
+## January 14, 2026 — Session 17
+
+### Summary
+Bulk Tag Assignment in Import Wizard - Added ability to select and apply tags to all contacts during CSV import, with inline tag creation support.
+
+### Completed
+- [x] Added tag selection state and fetched tags on mount via Zustand store
+- [x] Created collapsible "Tags to Apply" section in Mapping step
+- [x] Built searchable multi-select tag list with color indicators
+- [x] Implemented selected tags display as removable color-coded badges
+- [x] Added "Create New Tag" dialog with name input and 14-color picker
+- [x] Auto-select newly created tags for immediate use
+- [x] Updated Preview step with tags summary ("Apply X tags to Y contacts")
+- [x] Modified import execution to pass `selectedTagIds` to `createContact()`
+- [x] Added "Tags Applied" section in completion summary
+- [x] Installed shadcn/ui Collapsible component
+- [x] All lint and type checks pass
+
+### Files Changed
+- `src/app/contacts/import/page.tsx` — Major update: Added tag state, tag selector UI, inline tag creation dialog, preview tags display, completion summary tags (+370 lines)
+- `src/components/ui/collapsible.tsx` — New: shadcn Collapsible component for expandable tag section
+- `PLAN.md` — Updated: Added Bulk Tag Assignment feature plan
+- `TASKS.md` — Updated: Added and marked complete Phase 1 bulk tagging tasks
+
+### Decisions Made
+- **Collapsible section in Mapping step:** Added tag selection as a collapsible section rather than a new wizard step to maintain streamlined flow
+- **Inline tag creation:** Users can create new tags without leaving the import wizard
+- **Auto-select new tags:** Newly created tags are automatically selected for better UX
+- **No database changes:** Leveraged existing `createContact()` tags parameter - purely a UI feature
+
+### Blockers / Issues Encountered
+- **Missing Collapsible component:** Installed via `npx shadcn@latest add collapsible`
+
+### Next Steps
+- [ ] Phase 2: Conditional Tagging - Rule builder for column-based tag assignment
+- [ ] Test with real import scenarios
+
+---
+
 ## January 14, 2026 — Session 16
 
 ### Summary
@@ -888,4 +927,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 16)
+**Last Updated:** January 14, 2026 (Session 17)

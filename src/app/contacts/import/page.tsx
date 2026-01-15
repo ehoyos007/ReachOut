@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import {
@@ -15,9 +15,29 @@ import {
   CheckCircle2,
   XCircle,
   SkipForward,
+  Tag as TagIcon,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Card,
   CardContent,
@@ -50,8 +70,9 @@ import type {
   CsvImportError,
   CreateContactInput,
   Contact,
+  Tag,
 } from "@/types/contact";
-import { STANDARD_CONTACT_FIELDS, STATUS_DISPLAY_NAMES } from "@/types/contact";
+import { STANDARD_CONTACT_FIELDS, STATUS_DISPLAY_NAMES, DEFAULT_TAG_COLORS } from "@/types/contact";
 
 type ImportStep = "upload" | "mapping" | "preview" | "importing" | "complete";
 
@@ -78,8 +99,66 @@ export default function ImportContactsPage() {
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
 
+  // Tag selection state
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [tagSectionOpen, setTagSectionOpen] = useState(true);
+  const [tagSearchQuery, setTagSearchQuery] = useState("");
+  const [showCreateTagDialog, setShowCreateTagDialog] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [newTagColor, setNewTagColor] = useState(DEFAULT_TAG_COLORS[8]); // Indigo default
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+
   // Store
-  const { createContact } = useContactStore();
+  const { createContact, tags, fetchTags, createTag } = useContactStore();
+
+  // Fetch tags on mount
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  // Filter tags by search query
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(tagSearchQuery.toLowerCase())
+  );
+
+  // Get selected tag objects
+  const selectedTags = tags.filter((tag) => selectedTagIds.includes(tag.id));
+
+  // Handle tag selection
+  const handleTagSelect = (tagId: string) => {
+    setSelectedTagIds((prev) =>
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    );
+  };
+
+  // Handle tag removal
+  const handleTagRemove = (tagId: string) => {
+    setSelectedTagIds((prev) => prev.filter((id) => id !== tagId));
+  };
+
+  // Handle new tag creation
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) return;
+
+    setIsCreatingTag(true);
+    try {
+      const newTag = await createTag({
+        name: newTagName.trim(),
+        color: newTagColor,
+      });
+      if (newTag) {
+        // Auto-select the newly created tag
+        setSelectedTagIds((prev) => [...prev, newTag.id]);
+        setNewTagName("");
+        setNewTagColor(DEFAULT_TAG_COLORS[8]);
+        setShowCreateTagDialog(false);
+      }
+    } finally {
+      setIsCreatingTag(false);
+    }
+  };
 
   const handleFileSelect = useCallback((file: File) => {
     setFileError(null);
@@ -292,6 +371,11 @@ export default function ImportContactsPage() {
         contactInput.status = status.toLowerCase() as Contact["status"];
       }
 
+      // Add selected tags to the contact
+      if (selectedTagIds.length > 0) {
+        contactInput.tags = selectedTagIds;
+      }
+
       try {
         await createContact(contactInput);
         result.imported++;
@@ -322,6 +406,8 @@ export default function ImportContactsPage() {
     setMappings([]);
     setImportProgress(0);
     setImportResult(null);
+    setSelectedTagIds([]);
+    setTagSearchQuery("");
   };
 
   if (!isSupabaseConfigured()) {
@@ -553,9 +639,139 @@ export default function ImportContactsPage() {
                 })}
               </div>
 
+              {/* Tag Selection Section */}
+              <Collapsible
+                open={tagSectionOpen}
+                onOpenChange={setTagSectionOpen}
+                className="mt-6 pt-6 border-t"
+              >
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center justify-between w-full p-0 h-auto hover:bg-transparent"
+                  >
+                    <div className="flex items-center gap-2">
+                      <TagIcon className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium text-gray-900">
+                        Tags to Apply
+                      </span>
+                      {selectedTagIds.length > 0 && (
+                        <Badge variant="secondary" className="ml-2">
+                          {selectedTagIds.length} selected
+                        </Badge>
+                      )}
+                    </div>
+                    {tagSectionOpen ? (
+                      <ChevronUp className="w-4 h-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pt-4">
+                  <p className="text-sm text-gray-500 mb-4">
+                    Select tags to apply to all imported contacts. You can also create new tags.
+                  </p>
+
+                  {/* Selected Tags Display */}
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {selectedTags.map((tag) => (
+                        <Badge
+                          key={tag.id}
+                          variant="secondary"
+                          className="pl-2 pr-1 py-1 flex items-center gap-1"
+                          style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          <span className="text-gray-700">{tag.name}</span>
+                          <button
+                            onClick={() => handleTagRemove(tag.id)}
+                            className="ml-1 p-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                          >
+                            <X className="w-3 h-3 text-gray-500" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Tag Search */}
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search tags..."
+                      value={tagSearchQuery}
+                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+
+                  {/* Tag List */}
+                  <div className="border rounded-lg max-h-48 overflow-y-auto">
+                    {filteredTags.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500 text-sm">
+                        {tags.length === 0
+                          ? "No tags yet. Create one to get started."
+                          : "No tags match your search."}
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {filteredTags.map((tag) => {
+                          const isSelected = selectedTagIds.includes(tag.id);
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => handleTagSelect(tag.id)}
+                              className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors ${
+                                isSelected ? "bg-blue-50" : ""
+                              }`}
+                            >
+                              <div
+                                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                  isSelected
+                                    ? "bg-blue-500 border-blue-500"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                              <span
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: tag.color }}
+                              />
+                              <span className="text-gray-700">{tag.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Create New Tag Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3"
+                    onClick={() => setShowCreateTagDialog(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create New Tag
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
+
               <div className="flex items-center justify-between mt-6 pt-6 border-t">
                 <div className="text-sm text-gray-500">
                   {getMappedFieldsCount()} of {columns.length} columns mapped
+                  {selectedTagIds.length > 0 && (
+                    <span className="ml-2">
+                      • {selectedTagIds.length} tag{selectedTagIds.length !== 1 ? "s" : ""} selected
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" onClick={resetImport}>
@@ -664,6 +880,37 @@ export default function ImportContactsPage() {
                     <p className="text-sm text-gray-500">Will Skip</p>
                   </div>
                 </div>
+
+                {/* Tags to Apply */}
+                {selectedTags.length > 0 && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TagIcon className="w-4 h-4 text-gray-500" />
+                      <span className="text-sm font-medium text-gray-900">
+                        Tags to Apply ({selectedTags.length})
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTags.map((tag) => (
+                        <Badge
+                          key={tag.id}
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                          style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
+                        >
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: tag.color }}
+                          />
+                          {tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      These tags will be applied to all {allRows.filter((row, i) => validateRow(row, i).valid).length} valid contacts
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between mt-6 pt-6 border-t">
@@ -751,6 +998,37 @@ export default function ImportContactsPage() {
                 </div>
               </div>
 
+              {/* Tags Applied */}
+              {selectedTags.length > 0 && importResult.imported > 0 && (
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TagIcon className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-900">
+                      Tags Applied
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                        style={{ backgroundColor: `${tag.color}20`, borderColor: tag.color }}
+                      >
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-blue-700 mt-2">
+                    Applied to {importResult.imported} imported contact{importResult.imported !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              )}
+
               {/* Errors */}
               {importResult.errors.length > 0 && (
                 <div className="mb-6">
@@ -808,6 +1086,99 @@ export default function ImportContactsPage() {
           </Card>
         )}
       </div>
+
+      {/* Create New Tag Dialog */}
+      <Dialog open={showCreateTagDialog} onOpenChange={setShowCreateTagDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Tag</DialogTitle>
+            <DialogDescription>
+              Create a new tag to apply to imported contacts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="tagName">Tag Name</Label>
+              <Input
+                id="tagName"
+                placeholder="Enter tag name..."
+                value={newTagName}
+                onChange={(e) => setNewTagName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newTagName.trim()) {
+                    handleCreateTag();
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Tag Color</Label>
+              <div className="flex flex-wrap gap-2">
+                {DEFAULT_TAG_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => setNewTagColor(color)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      newTagColor === color
+                        ? "border-gray-900 scale-110"
+                        : "border-transparent hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Tag Preview */}
+            {newTagName.trim() && (
+              <div className="pt-2">
+                <Label className="text-xs text-gray-500">Preview</Label>
+                <div className="mt-1">
+                  <Badge
+                    variant="secondary"
+                    className="flex items-center gap-1 w-fit"
+                    style={{ backgroundColor: `${newTagColor}20`, borderColor: newTagColor }}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: newTagColor }}
+                    />
+                    {newTagName.trim()}
+                  </Badge>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreateTagDialog(false);
+                setNewTagName("");
+                setNewTagColor(DEFAULT_TAG_COLORS[8]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateTag}
+              disabled={!newTagName.trim() || isCreatingTag}
+            >
+              {isCreatingTag ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Tag
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

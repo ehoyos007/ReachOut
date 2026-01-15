@@ -450,3 +450,117 @@ React Flow was the clear choice for rapid development.
 **Status:** Approved (Phases 1-2 Complete)
 **Author:** Enzo Hoyos
 **Last Updated:** January 14, 2026
+
+---
+
+# Feature Plan: Bulk Tag Assignment in Contact Import Wizard
+
+> Enable bulk tag assignment during CSV import for automatic contact categorization.
+
+## Objective
+
+**Goal:** Allow users to bulk assign tags to contacts during the CSV import process, enabling automatic categorization without manual post-processing.
+
+**Success Criteria:**
+- [ ] Users can select multiple existing tags during import
+- [ ] Users can create new tags inline if needed
+- [ ] Selected tags display clearly before import confirmation
+- [ ] All imported contacts receive the selected tags
+- [ ] (Optional) Conditional tagging based on column values
+
+## Background
+
+The import wizard currently supports:
+- CSV upload with drag-and-drop
+- Auto-column detection and manual mapping
+- Row validation and preview
+- Progress tracking during import
+- Error reporting with row details
+
+**Key insight:** The `createContact()` function already accepts a `tags?: string[]` parameter—this is primarily a UI feature.
+
+## Requirements
+
+### Functional
+- Select multiple tags from existing tags list
+- Create new tags inline (name + color) without leaving wizard
+- Display selected tags with remove capability
+- Show impact preview ("Apply 3 tags to 250 contacts")
+- Apply tags to all successfully imported contacts
+- (Phase 2) Conditional tagging based on column values
+
+### Non-Functional
+- Smooth UX that doesn't disrupt existing wizard flow
+- Fast tag search/filter for large tag lists
+- Consistent styling with existing tag management UI
+
+## Proposed Approach: Section in Mapping Step ⭐
+
+Add a "Tags to Apply" collapsible section at the bottom of the Mapping step (step 2). Users configure column mappings and tag assignments in one place before previewing.
+
+**Pros:**
+- No new wizard steps required
+- Natural workflow: "What fields? What tags?"
+- Keeps import wizard streamlined
+
+## Technical Design
+
+### Component Changes
+
+#### Import Wizard (`src/app/contacts/import/page.tsx`)
+
+**New State:**
+```typescript
+const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+const [showCreateTag, setShowCreateTag] = useState(false);
+const [newTagName, setNewTagName] = useState("");
+const [newTagColor, setNewTagColor] = useState("#6366f1");
+```
+
+**Modified Import Logic:**
+```typescript
+// In executeImport(), pass tags to each contact
+const contactInput: CreateContactInput = {
+  // ... existing fields
+  tags: selectedTagIds, // Add this
+};
+```
+
+### No Database Changes Required
+
+Existing schema fully supports this:
+- `createContact()` already accepts `tags?: string[]`
+- Junction table `contact_tags` handles relationships
+
+## Implementation Phases
+
+### Phase 1: Basic Bulk Tagging (MVP)
+
+| Task | Description | Effort |
+|------|-------------|--------|
+| 1.1 | Add `selectedTagIds` state, fetch tags on mount | Small |
+| 1.2 | Create searchable multi-select tag dropdown | Medium |
+| 1.3 | Add inline tag creation (name + color picker) | Medium |
+| 1.4 | Update Preview step to show tags summary | Small |
+| 1.5 | Pass tags to `createContact()` during import | Small |
+| 1.6 | Testing & polish | Medium |
+
+### Phase 2: Conditional Tagging (Enhancement)
+
+| Task | Description | Effort |
+|------|-------------|--------|
+| 2.1 | Rule builder: "If [column] [operator] [value], apply [tag]" | Large |
+| 2.2 | Evaluate rules per row, merge with bulk tags | Medium |
+| 2.3 | Preview which rules apply to which contacts | Medium |
+
+## File Changes
+
+| File | Changes |
+|------|---------|
+| `src/app/contacts/import/page.tsx` | Add tag state, selector UI, modify import logic |
+| `src/types/contact.ts` | (Optional) Add `ConditionalTagRule` type for Phase 2 |
+
+---
+
+**Feature Status:** Planning
+**Last Updated:** January 14, 2026
