@@ -403,7 +403,7 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-full">
       {/* Saved Views Sidebar */}
       <SavedViewsSidebar
         savedViewsState={savedViewsState}

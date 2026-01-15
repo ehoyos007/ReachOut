@@ -103,7 +103,7 @@ export function SavedViewsSidebar({
 
   if (isCollapsed) {
     return (
-      <div className="w-12 border-r bg-white flex flex-col items-center py-4">
+      <div className="w-12 border-r bg-white flex flex-col items-center py-4 h-full overflow-y-auto">
         <Button
           variant="ghost"
           size="sm"
