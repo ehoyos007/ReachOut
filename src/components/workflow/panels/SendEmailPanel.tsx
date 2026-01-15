@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CreateTemplateDialog } from "./CreateTemplateDialog";
+import { PreviewPanel } from "./PreviewPanel";
 import type { SendEmailData } from "@/types/workflow";
 import type { Template } from "@/types/template";
 
@@ -175,6 +176,14 @@ export function SendEmailPanel() {
           Leave empty to use the default SendGrid email.
         </p>
       </div>
+
+      {/* Preview Panel */}
+      <PreviewPanel
+        channel="email"
+        body={selectedTemplate?.body || ""}
+        subject={data.subjectOverride || selectedTemplate?.subject || ""}
+        disabled={!selectedTemplate}
+      />
     </div>
   );
 }

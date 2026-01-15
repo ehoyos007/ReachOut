@@ -36,7 +36,8 @@ export type SettingKey =
   | "sendgrid_from_email"
   | "sendgrid_from_name"
   | "sender_emails"
-  | "sender_phones";
+  | "sender_phones"
+  | "preview_preferences";
 
 export const SETTING_KEYS: SettingKey[] = [
   "twilio_account_sid",
@@ -47,6 +48,7 @@ export const SETTING_KEYS: SettingKey[] = [
   "sendgrid_from_name",
   "sender_emails",
   "sender_phones",
+  "preview_preferences",
 ];
 
 // =============================================================================
@@ -173,6 +175,25 @@ export interface TwilioTestResult extends TestResult {
 export interface SendGridTestResult extends TestResult {
   senderVerified?: boolean;
 }
+
+// =============================================================================
+// Preview Preferences Types
+// =============================================================================
+
+export interface PreviewPreferences {
+  /** Default phone number for SMS previews */
+  sms_phone: string | null;
+  /** Default email address for email previews */
+  email_address: string | null;
+  /** Custom test data for variable substitution */
+  test_data: Record<string, string>;
+}
+
+export const DEFAULT_PREVIEW_PREFERENCES: PreviewPreferences = {
+  sms_phone: null,
+  email_address: null,
+  test_data: {},
+};
 
 // =============================================================================
 // Form Types

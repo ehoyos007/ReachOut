@@ -2169,6 +2169,50 @@ export async function getDefaultSender(
 }
 
 // =============================================================================
+// Preview Preferences Operations
+// =============================================================================
+
+import {
+  DEFAULT_PREVIEW_PREFERENCES,
+  type PreviewPreferences,
+} from "@/types/settings";
+
+/**
+ * Get preview preferences
+ */
+export async function getPreviewPreferences(): Promise<PreviewPreferences> {
+  const setting = await getSetting("preview_preferences");
+  if (!setting?.value) return { ...DEFAULT_PREVIEW_PREFERENCES };
+
+  try {
+    const parsed = JSON.parse(setting.value) as Partial<PreviewPreferences>;
+    return {
+      sms_phone: parsed.sms_phone ?? null,
+      email_address: parsed.email_address ?? null,
+      test_data: parsed.test_data ?? {},
+    };
+  } catch {
+    return { ...DEFAULT_PREVIEW_PREFERENCES };
+  }
+}
+
+/**
+ * Update preview preferences
+ */
+export async function updatePreviewPreferences(
+  updates: Partial<PreviewPreferences>
+): Promise<PreviewPreferences> {
+  const current = await getPreviewPreferences();
+  const updated: PreviewPreferences = {
+    ...current,
+    ...updates,
+  };
+
+  await updateSetting("preview_preferences", JSON.stringify(updated));
+  return updated;
+}
+
+// =============================================================================
 // Saved Views Operations
 // =============================================================================
 

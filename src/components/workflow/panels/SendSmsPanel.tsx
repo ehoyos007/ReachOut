@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CreateTemplateDialog } from "./CreateTemplateDialog";
+import { PreviewPanel } from "./PreviewPanel";
 import type { SendSmsData } from "@/types/workflow";
 import type { Template } from "@/types/template";
 import { calculateSmsSegments } from "@/types/template";
@@ -157,6 +158,13 @@ export function SendSmsPanel() {
           Leave empty to use the default Twilio number.
         </p>
       </div>
+
+      {/* Preview Panel */}
+      <PreviewPanel
+        channel="sms"
+        body={selectedTemplate?.body || ""}
+        disabled={!selectedTemplate}
+      />
     </div>
   );
 }
