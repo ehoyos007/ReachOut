@@ -12,6 +12,7 @@ import { SendEmailPanel } from "./SendEmailPanel";
 import { UpdateStatusPanel } from "./UpdateStatusPanel";
 import { StopOnReplyPanel } from "./StopOnReplyPanel";
 import { ReturnToParentPanel } from "./ReturnToParentPanel";
+import { CallSubWorkflowPanel } from "./CallSubWorkflowPanel";
 import type { WorkflowNodeType } from "@/types/workflow";
 
 const PANEL_COMPONENTS: Record<WorkflowNodeType, React.ComponentType | null> = {
@@ -23,6 +24,7 @@ const PANEL_COMPONENTS: Record<WorkflowNodeType, React.ComponentType | null> = {
   update_status: UpdateStatusPanel,
   stop_on_reply: StopOnReplyPanel,
   return_to_parent: ReturnToParentPanel,
+  call_sub_workflow: CallSubWorkflowPanel,
 };
 
 const NODE_TYPE_LABELS: Record<WorkflowNodeType, string> = {
@@ -34,6 +36,7 @@ const NODE_TYPE_LABELS: Record<WorkflowNodeType, string> = {
   update_status: "Update Status",
   stop_on_reply: "Stop on Reply",
   return_to_parent: "Return to Parent",
+  call_sub_workflow: "Call Sub-Workflow",
 };
 
 export function NodeConfigPanel() {

@@ -7,7 +7,9 @@ import type {
   UpdateStatusData,
   StopOnReplyData,
   ReturnToParentData,
+  CallSubWorkflowData,
   ComparisonOperator,
+  TriggerConfig,
 } from "@/types/workflow";
 import type {
   NodeProcessor,
@@ -23,6 +25,10 @@ import {
   updateContact,
   createMessage,
   hasInboundMessageSince,
+  loadWorkflowWithNodesAndEdges,
+  createEnrollment,
+  getEnrollmentByWorkflowAndContact,
+  createExecution,
 } from "@/lib/supabase";
 import type { TwilioSettings, SendGridSettings } from "@/types/message";
 import { contactToPlaceholderValues, replacePlaceholders } from "@/types/template";
@@ -612,6 +618,233 @@ export const returnToParentProcessor: NodeProcessor = {
 };
 
 // =============================================================================
+// Call Sub-Workflow Processor
+// =============================================================================
+
+/**
+ * Call Sub-Workflow Node - Execute another workflow as a sub-workflow
+ */
+export const callSubWorkflowProcessor: NodeProcessor = {
+  async execute(node, context): Promise<NodeProcessorResult> {
+    const data = node.data as CallSubWorkflowData;
+    const { contact } = context;
+
+    // Validate target workflow is configured
+    if (!data.targetWorkflowId) {
+      return {
+        nextNodeId: getNextNodeId(context.workflow, node.id),
+        nextRunAt: null,
+        error: "No target workflow configured",
+        outputData: {
+          action: "sub_workflow_skipped",
+          reason: "no_target_workflow",
+        },
+      };
+    }
+
+    // Load the target workflow
+    const targetWorkflow = await loadWorkflowWithNodesAndEdges(data.targetWorkflowId);
+    if (!targetWorkflow) {
+      return {
+        nextNodeId: data.onFailure === "continue"
+          ? getNextNodeId(context.workflow, node.id)
+          : null,
+        nextRunAt: null,
+        error: `Target workflow ${data.targetWorkflowId} not found`,
+        outputData: {
+          action: "sub_workflow_failed",
+          reason: "workflow_not_found",
+          target_workflow_id: data.targetWorkflowId,
+        },
+      };
+    }
+
+    // Verify the target workflow has a sub_workflow trigger
+    const triggerNode = targetWorkflow.nodes.find((n) => n.type === "trigger_start");
+    if (!triggerNode) {
+      return {
+        nextNodeId: data.onFailure === "continue"
+          ? getNextNodeId(context.workflow, node.id)
+          : null,
+        nextRunAt: null,
+        error: "Target workflow has no trigger node",
+        outputData: {
+          action: "sub_workflow_failed",
+          reason: "no_trigger_node",
+          target_workflow_id: data.targetWorkflowId,
+        },
+      };
+    }
+
+    const triggerConfig = triggerNode.data as { triggerConfig?: TriggerConfig };
+    if (triggerConfig.triggerConfig?.type !== "sub_workflow") {
+      return {
+        nextNodeId: data.onFailure === "continue"
+          ? getNextNodeId(context.workflow, node.id)
+          : null,
+        nextRunAt: null,
+        error: "Target workflow is not configured as a sub-workflow",
+        outputData: {
+          action: "sub_workflow_failed",
+          reason: "not_sub_workflow",
+          target_workflow_id: data.targetWorkflowId,
+        },
+      };
+    }
+
+    // Check if the contact is already enrolled in this sub-workflow
+    const existingEnrollment = await getEnrollmentByWorkflowAndContact(
+      data.targetWorkflowId,
+      contact.id
+    );
+
+    let enrollmentId: string;
+    let executionId: string;
+
+    if (existingEnrollment && existingEnrollment.status === "active") {
+      // Contact is already enrolled and active - this is likely a circular reference
+      return {
+        nextNodeId: data.onFailure === "continue"
+          ? getNextNodeId(context.workflow, node.id)
+          : null,
+        nextRunAt: null,
+        error: "Contact is already enrolled in this sub-workflow (possible circular reference)",
+        outputData: {
+          action: "sub_workflow_failed",
+          reason: "circular_reference",
+          target_workflow_id: data.targetWorkflowId,
+          existing_enrollment_id: existingEnrollment.id,
+        },
+      };
+    }
+
+    // Create a new enrollment for the sub-workflow
+    try {
+      const enrollment = await createEnrollment(data.targetWorkflowId, contact.id);
+      enrollmentId = enrollment.id;
+
+      // Create an execution starting at the trigger node
+      const execution = await createExecution(enrollment.id, triggerNode.id);
+      executionId = execution.id;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to create sub-workflow enrollment";
+
+      if (data.onFailure === "continue") {
+        return {
+          nextNodeId: getNextNodeId(context.workflow, node.id),
+          nextRunAt: null,
+          error: errorMessage,
+          outputData: {
+            action: "sub_workflow_failed",
+            reason: "enrollment_failed",
+            error: errorMessage,
+          },
+        };
+      }
+
+      return {
+        nextNodeId: null,
+        nextRunAt: null,
+        error: errorMessage,
+        outputData: {
+          action: "sub_workflow_failed",
+          reason: "enrollment_failed",
+          error: errorMessage,
+        },
+      };
+    }
+
+    // Store input data for the sub-workflow to access
+    // In a full implementation, this would be stored in the execution_data
+    const inputData: Record<string, unknown> = {};
+    for (const mapping of data.inputMappings || []) {
+      // In a real implementation, we'd evaluate the value expression
+      // (e.g., {{contact.email}} → contact's email)
+      // For now, just store the raw value or simple placeholder resolution
+      let value = mapping.valueExpression;
+
+      // Basic placeholder resolution for contact fields
+      if (value.startsWith("{{contact.") && value.endsWith("}}")) {
+        const fieldName = value.slice(10, -2);
+        value = getContactFieldValue(context, fieldName) || "";
+      }
+
+      inputData[mapping.variableName] = value;
+    }
+
+    // For async mode, we're done - the sub-workflow will execute independently
+    if (data.executionMode === "async") {
+      return {
+        nextNodeId: getNextNodeId(context.workflow, node.id),
+        nextRunAt: null,
+        executionData: {
+          sub_workflow_calls: [
+            ...((context.execution.execution_data.sub_workflow_calls as unknown[]) || []),
+            {
+              target_workflow_id: data.targetWorkflowId,
+              enrollment_id: enrollmentId,
+              execution_id: executionId,
+              mode: "async",
+              input_data: inputData,
+              started_at: new Date().toISOString(),
+            },
+          ],
+        },
+        outputData: {
+          action: "sub_workflow_started",
+          mode: "async",
+          target_workflow_id: data.targetWorkflowId,
+          target_workflow_name: data.targetWorkflowName,
+          enrollment_id: enrollmentId,
+          execution_id: executionId,
+          input_data: inputData,
+        },
+      };
+    }
+
+    // For sync mode, we need more infrastructure to wait for completion
+    // Currently, we'll start the workflow and proceed (pseudo-sync)
+    // A full implementation would:
+    // 1. Execute the sub-workflow inline or poll for completion
+    // 2. Respect the timeout setting
+    // 3. Return the output data from the sub-workflow's return_to_parent node
+
+    return {
+      nextNodeId: getNextNodeId(context.workflow, node.id),
+      nextRunAt: null,
+      executionData: {
+        sub_workflow_calls: [
+          ...((context.execution.execution_data.sub_workflow_calls as unknown[]) || []),
+          {
+            target_workflow_id: data.targetWorkflowId,
+            enrollment_id: enrollmentId,
+            execution_id: executionId,
+            mode: "sync",
+            input_data: inputData,
+            started_at: new Date().toISOString(),
+            // In a full implementation, this would include the result
+            result: null,
+          },
+        ],
+      },
+      outputData: {
+        action: "sub_workflow_started",
+        mode: "sync",
+        target_workflow_id: data.targetWorkflowId,
+        target_workflow_name: data.targetWorkflowName,
+        enrollment_id: enrollmentId,
+        execution_id: executionId,
+        input_data: inputData,
+        // Note: Sync mode currently starts the workflow but doesn't wait for completion
+        // A full implementation would include the sub-workflow's output here
+        result: null,
+        status: "pending",
+      },
+    };
+  },
+};
+
+// =============================================================================
 // Processor Registry
 // =============================================================================
 
@@ -624,6 +857,7 @@ export const nodeProcessors: Record<WorkflowNodeType, NodeProcessor> = {
   update_status: updateStatusProcessor,
   stop_on_reply: stopOnReplyProcessor,
   return_to_parent: returnToParentProcessor,
+  call_sub_workflow: callSubWorkflowProcessor,
 };
 
 /**

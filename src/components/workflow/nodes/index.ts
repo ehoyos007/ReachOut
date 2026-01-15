@@ -6,3 +6,4 @@ export { SendEmailNode } from "./SendEmailNode";
 export { UpdateStatusNode } from "./UpdateStatusNode";
 export { StopOnReplyNode } from "./StopOnReplyNode";
 export { ReturnToParentNode } from "./ReturnToParentNode";
+export { CallSubWorkflowNode } from "./CallSubWorkflowNode";

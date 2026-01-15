@@ -51,6 +51,65 @@ export async function getWorkflows(): Promise<DbWorkflow[]> {
   return data || [];
 }
 
+export interface SubWorkflowInfo {
+  id: string;
+  name: string;
+  inputVariables: Array<{
+    name: string;
+    type: string;
+    description?: string;
+    required?: boolean;
+    defaultValue?: unknown;
+  }>;
+  executionMode: "sync" | "async";
+}
+
+/**
+ * Get all workflows configured as sub-workflows (with sub_workflow trigger type)
+ * Returns workflow info along with their input variable definitions
+ */
+export async function getSubWorkflows(): Promise<SubWorkflowInfo[]> {
+  const client = getSupabase();
+
+  // Get all workflows with their trigger nodes
+  const { data: workflows, error: workflowError } = await client
+    .from("workflows")
+    .select("id, name")
+    .order("name", { ascending: true });
+
+  if (workflowError) throw workflowError;
+  if (!workflows || workflows.length === 0) return [];
+
+  // Get trigger nodes for all workflows
+  const { data: triggerNodes, error: nodeError } = await client
+    .from("workflow_nodes")
+    .select("workflow_id, data")
+    .eq("type", "trigger_start")
+    .in("workflow_id", workflows.map(w => w.id));
+
+  if (nodeError) throw nodeError;
+
+  // Filter and map workflows that have sub_workflow trigger
+  const subWorkflows: SubWorkflowInfo[] = [];
+
+  for (const workflow of workflows) {
+    const triggerNode = triggerNodes?.find(n => n.workflow_id === workflow.id);
+    if (!triggerNode) continue;
+
+    const data = triggerNode.data as { triggerConfig?: { type: string; inputVariables?: unknown[]; executionMode?: string } };
+    if (data.triggerConfig?.type !== "sub_workflow") continue;
+
+    subWorkflows.push({
+      id: workflow.id,
+      name: workflow.name,
+      inputVariables: (data.triggerConfig.inputVariables || []) as SubWorkflowInfo["inputVariables"],
+      executionMode: (data.triggerConfig.executionMode || "sync") as "sync" | "async",
+    });
+  }
+
+  return subWorkflows;
+}
+
 export async function getWorkflow(id: string): Promise<DbWorkflow | null> {
   const { data, error } = await getSupabase()
     .from("workflows")
@@ -779,6 +838,8 @@ import type {
   MessageFilters,
   CreateMessageInput,
   UpdateMessageInput,
+  MessageChannel,
+  MessageStatus,
 } from "@/types/message";
 
 export async function getMessages(
@@ -954,6 +1015,97 @@ export async function getMessageCount(filters?: MessageFilters): Promise<number>
 
   if (error) throw error;
   return count || 0;
+}
+
+// =============================================================================
+// Sent Messages with Contact (for Sent Messages Dashboard)
+// =============================================================================
+
+export interface SentMessageWithContact extends Message {
+  contact?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+  };
+}
+
+export interface SentMessagesFilters {
+  channel?: MessageChannel;
+  status?: MessageStatus;
+  search?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface SentMessagesResult {
+  messages: SentMessageWithContact[];
+  total: number;
+}
+
+export async function getSentMessagesWithContact(
+  filters?: SentMessagesFilters,
+  pagination?: { page: number; pageSize: number }
+): Promise<SentMessagesResult> {
+  const client = getSupabase();
+
+  const page = pagination?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? 25;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = client
+    .from("messages")
+    .select(
+      `
+      *,
+      contact:contacts!messages_contact_id_fkey (
+        id,
+        first_name,
+        last_name,
+        email,
+        phone
+      )
+    `,
+      { count: "exact" }
+    )
+    .eq("direction", "outbound")
+    .order("created_at", { ascending: false });
+
+  // Apply filters
+  if (filters?.channel) {
+    query = query.eq("channel", filters.channel);
+  }
+
+  if (filters?.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  if (filters?.dateFrom) {
+    query = query.gte("created_at", filters.dateFrom);
+  }
+
+  if (filters?.dateTo) {
+    query = query.lte("created_at", filters.dateTo);
+  }
+
+  // Apply search - searches in body and subject
+  if (filters?.search) {
+    query = query.or(
+      `body.ilike.%${filters.search}%,subject.ilike.%${filters.search}%`
+    );
+  }
+
+  query = query.range(from, to);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+  return {
+    messages: (data || []) as SentMessageWithContact[],
+    total: count || 0,
+  };
 }
 
 // =============================================================================
@@ -1669,7 +1821,10 @@ export async function deleteReadNotifications(): Promise<void> {
 // Scheduled Message Operations
 // =============================================================================
 
-import type { ScheduledMessageFilters, MessageFromIdentity } from "@/types/message";
+import type {
+  ScheduledMessageFilters,
+  MessageFromIdentity,
+} from "@/types/message";
 import type {
   SenderEmail,
   SenderPhone,

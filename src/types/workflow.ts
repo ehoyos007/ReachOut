@@ -9,7 +9,8 @@ export type WorkflowNodeType =
   | "send_email"
   | "update_status"
   | "stop_on_reply"
-  | "return_to_parent";
+  | "return_to_parent"
+  | "call_sub_workflow";
 
 // Time units for delays
 export type TimeUnit = "minutes" | "hours" | "days";
@@ -226,6 +227,26 @@ export interface ReturnToParentData extends BaseNodeData {
   customStatusField?: string;
 }
 
+// Input mapping for sub-workflow calls
+export interface InputMapping {
+  variableName: string; // The input variable name defined in the sub-workflow
+  valueExpression: string; // Expression to get the value (e.g., "{{contact.email}}" or static value)
+}
+
+// On failure behavior options
+export type OnFailureBehavior = "stop" | "continue" | "retry";
+
+export interface CallSubWorkflowData extends BaseNodeData {
+  label: string;
+  targetWorkflowId: string | null; // ID of the sub-workflow to call
+  targetWorkflowName: string | null; // Display name for UI
+  executionMode: ExecutionMode; // "sync" or "async"
+  inputMappings: InputMapping[]; // Map parent data to sub-workflow inputs
+  timeoutSeconds: number; // Timeout for sync mode (0 = no timeout)
+  onFailure: OnFailureBehavior; // What to do if sub-workflow fails
+  retryCount?: number; // Number of retries if onFailure is "retry"
+}
+
 // Union type for all node data
 export type WorkflowNodeData =
   | TriggerStartData
@@ -235,7 +256,8 @@ export type WorkflowNodeData =
   | SendEmailData
   | UpdateStatusData
   | StopOnReplyData
-  | ReturnToParentData;
+  | ReturnToParentData
+  | CallSubWorkflowData;
 
 // =============================================================================
 // React Flow Node Types
@@ -249,6 +271,7 @@ export type SendEmailNode = Node<SendEmailData, "send_email">;
 export type UpdateStatusNode = Node<UpdateStatusData, "update_status">;
 export type StopOnReplyNode = Node<StopOnReplyData, "stop_on_reply">;
 export type ReturnToParentNode = Node<ReturnToParentData, "return_to_parent">;
+export type CallSubWorkflowNode = Node<CallSubWorkflowData, "call_sub_workflow">;
 
 export type WorkflowNode =
   | TriggerStartNode
@@ -258,7 +281,8 @@ export type WorkflowNode =
   | SendEmailNode
   | UpdateStatusNode
   | StopOnReplyNode
-  | ReturnToParentNode;
+  | ReturnToParentNode
+  | CallSubWorkflowNode;
 
 // =============================================================================
 // Workflow Types
@@ -413,6 +437,22 @@ export const NODE_TYPE_CONFIGS: NodeTypeConfig[] = [
       outputVariables: [],
       returnStatus: "success",
     } as ReturnToParentData,
+  },
+  {
+    type: "call_sub_workflow",
+    label: "Call Sub-Workflow",
+    description: "Execute another workflow",
+    icon: "Workflow",
+    category: "action",
+    defaultData: {
+      label: "Call Sub-Workflow",
+      targetWorkflowId: null,
+      targetWorkflowName: null,
+      executionMode: "sync",
+      inputMappings: [],
+      timeoutSeconds: 300,
+      onFailure: "stop",
+    } as CallSubWorkflowData,
   },
 ];
 

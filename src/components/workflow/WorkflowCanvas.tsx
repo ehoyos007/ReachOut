@@ -28,6 +28,7 @@ import {
   UpdateStatusNode,
   StopOnReplyNode,
   ReturnToParentNode,
+  CallSubWorkflowNode,
 } from "./nodes";
 import type { WorkflowNodeType } from "@/types/workflow";
 import { Save, Power, Loader2, ArrowLeft, Users } from "lucide-react";
@@ -42,6 +43,7 @@ const nodeTypes = {
   update_status: UpdateStatusNode,
   stop_on_reply: StopOnReplyNode,
   return_to_parent: ReturnToParentNode,
+  call_sub_workflow: CallSubWorkflowNode,
 };
 
 function WorkflowCanvasInner() {
@@ -231,6 +233,8 @@ function WorkflowCanvasInner() {
                       return "#ef4444";
                     case "return_to_parent":
                       return "#818cf8";
+                    case "call_sub_workflow":
+                      return "#06b6d4";
                     default:
                       return "#6b7280";
                   }

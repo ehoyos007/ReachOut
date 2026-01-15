@@ -10,6 +10,7 @@ import {
   UserCheck,
   StopCircle,
   CornerUpLeft,
+  Workflow,
   LucideIcon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   UserCheck,
   StopCircle,
   CornerUpLeft,
+  Workflow,
 };
 
 interface NodePaletteItem {
@@ -122,6 +124,14 @@ const NODE_CATEGORIES: {
         icon: "CornerUpLeft",
         iconColor: "text-indigo-600",
         iconBgColor: "bg-indigo-100",
+      },
+      {
+        type: "call_sub_workflow",
+        label: "Call Sub-Workflow",
+        description: "Execute another workflow",
+        icon: "Workflow",
+        iconColor: "text-cyan-600",
+        iconBgColor: "bg-cyan-100",
       },
     ],
   },
