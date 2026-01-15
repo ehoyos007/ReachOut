@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import Home from '@/app/page';
 
 // Mock next/link
@@ -8,7 +8,7 @@ jest.mock('next/link', () => {
   };
 });
 
-// Mock next/navigation for App Router components (NotificationsDropdown uses useRouter)
+// Mock next/navigation for App Router components
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: jest.fn(),
@@ -22,106 +22,135 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-describe('Home Page', () => {
-  beforeEach(() => {
+// Mock the Supabase client with proper async behavior
+const mockFrom = jest.fn();
+jest.mock('@/lib/supabase', () => ({
+  supabase: {
+    from: () => ({
+      select: () => ({
+        eq: () => Promise.resolve({ count: 5, data: [], error: null }),
+        order: () => ({
+          limit: () => Promise.resolve({ data: [], error: null }),
+        }),
+        count: 10,
+        data: [],
+        error: null,
+      }),
+    }),
+  },
+  isSupabaseConfigured: () => true,
+}));
+
+describe('Dashboard Page', () => {
+  beforeEach(async () => {
     render(<Home />);
-  });
-
-  describe('Header', () => {
-    it('should display the app name', () => {
-      expect(screen.getByText('ReachOut')).toBeInTheDocument();
-    });
-
-    it('should have navigation links', () => {
-      const navLinks = screen.getAllByRole('link');
-      const workflowLinks = navLinks.filter((link) =>
-        link.getAttribute('href') === '/workflows'
-      );
-      const contactLinks = navLinks.filter((link) =>
-        link.getAttribute('href') === '/contacts'
-      );
-
-      expect(workflowLinks.length).toBeGreaterThan(0);
-      expect(contactLinks.length).toBeGreaterThan(0);
+    // Wait for the loading state to finish
+    await waitFor(() => {
+      expect(screen.queryByText('Dashboard')).toBeInTheDocument();
     });
   });
 
-  describe('Hero Section', () => {
-    it('should display the main heading', () => {
-      expect(
-        screen.getByText('Automated Outreach Made Simple')
-      ).toBeInTheDocument();
+  describe('Page Header', () => {
+    it('should display the dashboard title', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Dashboard')).toBeInTheDocument();
+      });
     });
 
-    it('should display the description', () => {
-      expect(
-        screen.getByText(/Build and run automated SMS and email outreach campaigns/i)
-      ).toBeInTheDocument();
+    it('should display the welcome message', async () => {
+      await waitFor(() => {
+        expect(
+          screen.getByText(/Welcome back!/i)
+        ).toBeInTheDocument();
+      });
     });
   });
 
-  describe('Feature Cards', () => {
-    it('should display Workflows feature', () => {
-      // Multiple elements have "Workflows" text (nav + card heading)
-      expect(screen.getAllByText('Workflows').length).toBeGreaterThanOrEqual(1);
-      expect(
-        screen.getByText(/Create visual automation sequences/i)
-      ).toBeInTheDocument();
+  describe('Stats Cards', () => {
+    it('should display Total Contacts stat card', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Total Contacts')).toBeInTheDocument();
+      });
     });
 
-    it('should display Contacts feature', () => {
-      // Multiple elements have "Contacts" text (nav + card heading)
-      expect(screen.getAllByText('Contacts').length).toBeGreaterThanOrEqual(1);
-      expect(
-        screen.getByText(/Manage your contacts and organize them/i)
-      ).toBeInTheDocument();
+    it('should display Active Workflows stat card', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Active Workflows')).toBeInTheDocument();
+      });
     });
 
-    it('should display Templates feature', () => {
-      // Multiple elements have "Templates" text (nav + card heading)
-      expect(screen.getAllByText('Templates').length).toBeGreaterThanOrEqual(1);
-      expect(
-        screen.getByText(/Create reusable SMS and email message templates/i)
-      ).toBeInTheDocument();
+    it('should display Messages Sent stat card', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Messages Sent')).toBeInTheDocument();
+      });
     });
 
-    it('should display Settings feature', () => {
-      // Multiple elements have "Settings" text (nav + card heading)
-      expect(screen.getAllByText('Settings').length).toBeGreaterThanOrEqual(1);
-      expect(
-        screen.getByText(/Configure Twilio, SendGrid, and other integrations/i)
-      ).toBeInTheDocument();
+    it('should display Response Rate stat card', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Response Rate')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Recent Activity Section', () => {
+    it('should display Recent Activity card title', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Recent Activity')).toBeInTheDocument();
+      });
     });
 
-    it('should have clickable links for Workflows and Contacts', () => {
-      const links = screen.getAllByRole('link');
-      const workflowsLink = links.find(
-        (link) => link.getAttribute('href') === '/workflows'
-      );
-      const contactsLink = links.find(
-        (link) => link.getAttribute('href') === '/contacts'
-      );
+    it('should display activity description', async () => {
+      await waitFor(() => {
+        expect(
+          screen.getByText('Latest messages across all contacts')
+        ).toBeInTheDocument();
+      });
+    });
+  });
 
-      expect(workflowsLink).toBeInTheDocument();
-      expect(contactsLink).toBeInTheDocument();
+  describe('Quick Actions Section', () => {
+    it('should display Quick Actions card title', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Quick Actions')).toBeInTheDocument();
+      });
     });
 
-    it('should have clickable links for Templates', () => {
-      const links = screen.getAllByRole('link');
-      const templatesLink = links.find(
-        (link) => link.getAttribute('href') === '/templates'
-      );
-
-      expect(templatesLink).toBeInTheDocument();
+    it('should display quick action buttons', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Create New Workflow')).toBeInTheDocument();
+        expect(screen.getByText('Import Contacts')).toBeInTheDocument();
+        expect(screen.getByText('Manage Templates')).toBeInTheDocument();
+      });
     });
 
-    it('should have clickable links for Settings', () => {
-      const links = screen.getAllByRole('link');
-      const settingsLink = links.find(
-        (link) => link.getAttribute('href') === '/settings'
-      );
+    it('should have correct navigation links', async () => {
+      await waitFor(() => {
+        const links = screen.getAllByRole('link');
 
-      expect(settingsLink).toBeInTheDocument();
+        const workflowsNewLink = links.find(
+          (link) => link.getAttribute('href') === '/workflows/new'
+        );
+        const importLink = links.find(
+          (link) => link.getAttribute('href') === '/contacts/import'
+        );
+        const templatesLink = links.find(
+          (link) => link.getAttribute('href') === '/templates'
+        );
+
+        expect(workflowsNewLink).toBeTruthy();
+        expect(importLink).toBeTruthy();
+        expect(templatesLink).toBeTruthy();
+      });
+    });
+
+    it('should display navigation shortcuts', async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Navigate to')).toBeInTheDocument();
+        expect(screen.getByText('Workflows')).toBeInTheDocument();
+        expect(screen.getByText('Contacts')).toBeInTheDocument();
+        expect(screen.getByText('Templates')).toBeInTheDocument();
+        expect(screen.getByText('Notifications')).toBeInTheDocument();
+      });
     });
   });
 });

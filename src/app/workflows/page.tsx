@@ -139,7 +139,7 @@ export default function WorkflowsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
       </div>
     );
@@ -147,7 +147,7 @@ export default function WorkflowsPage() {
 
   if (!supabaseReady) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="p-6 flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Setup Required</CardTitle>
@@ -170,117 +170,115 @@ export default function WorkflowsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
-            <p className="text-gray-500 mt-1">
-              Create and manage your automation workflows
-            </p>
-          </div>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Workflow
-          </Button>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
+          <p className="text-gray-500">
+            Create and manage your automation workflows
+          </p>
         </div>
+        <Button onClick={() => setIsCreateOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Workflow
+        </Button>
+      </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-            <button
-              className="ml-2 underline"
-              onClick={() => setError(null)}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+          <button
+            className="ml-2 underline"
+            onClick={() => setError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {workflows.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              No workflows yet
+            </h3>
+            <p className="text-gray-500 text-center max-w-sm mb-4">
+              Create your first workflow to start automating your outreach
+              campaigns.
+            </p>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Workflow
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {workflows.map((workflow) => (
+            <Card
+              key={workflow.id}
+              className="hover:shadow-md transition-shadow"
             >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {workflows.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <Plus className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No workflows yet
-              </h3>
-              <p className="text-gray-500 text-center max-w-sm mb-4">
-                Create your first workflow to start automating your outreach
-                campaigns.
-              </p>
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Workflow
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {workflows.map((workflow) => (
-              <Card
-                key={workflow.id}
-                className="hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">
-                            {workflow.name}
-                          </h3>
-                          {workflow.is_enabled ? (
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">Inactive</Badge>
-                          )}
-                        </div>
-                        {workflow.description && (
-                          <p className="text-sm text-gray-500 mt-1">
-                            {workflow.description}
-                          </p>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-gray-900">
+                          {workflow.name}
+                        </h3>
+                        {workflow.is_enabled ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Inactive</Badge>
                         )}
-                        <p className="text-xs text-gray-400 mt-2">
-                          Updated {formatDate(workflow.updated_at)}
-                        </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleEnabled(workflow)}
-                      >
-                        <Power className="w-4 h-4 mr-2" />
-                        {workflow.is_enabled ? "Disable" : "Enable"}
-                      </Button>
-                      <Link href={`/workflows/${workflow.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={() => setDeleteTarget(workflow)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {workflow.description && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {workflow.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-2">
+                        Updated {formatDate(workflow.updated_at)}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleEnabled(workflow)}
+                    >
+                      <Power className="w-4 h-4 mr-2" />
+                      {workflow.is_enabled ? "Disable" : "Enable"}
+                    </Button>
+                    <Link href={`/workflows/${workflow.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setDeleteTarget(workflow)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

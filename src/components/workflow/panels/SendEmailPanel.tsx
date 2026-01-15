@@ -1,6 +1,11 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useWorkflowStore } from "@/lib/store/workflowStore";
+import {
+  useTemplateStore,
+  selectEmailTemplates,
+} from "@/lib/store/templateStore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,25 +15,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CreateTemplateDialog } from "./CreateTemplateDialog";
 import type { SendEmailData } from "@/types/workflow";
-
-// Placeholder templates - in a real app, these would come from the database
-const PLACEHOLDER_TEMPLATES = [
-  { id: "1", name: "Welcome Email" },
-  { id: "2", name: "Follow-up Email" },
-  { id: "3", name: "Newsletter" },
-];
+import type { Template } from "@/types/template";
 
 export function SendEmailPanel() {
   const { selectedNodeId, nodes, updateNodeData } = useWorkflowStore();
+  const { templates, fetchTemplates, isLoading } = useTemplateStore();
+
+  // Fetch templates on mount
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
+
+  // Filter to only Email templates
+  const emailTemplates = useMemo(
+    () => selectEmailTemplates(templates),
+    [templates]
+  );
 
   const node = nodes.find((n) => n.id === selectedNodeId);
   if (!node || node.type !== "send_email") return null;
 
   const data = node.data as SendEmailData;
 
+  // Find the selected template for preview
+  const selectedTemplate = emailTemplates.find((t) => t.id === data.templateId);
+
   const handleTemplateChange = (templateId: string) => {
-    const template = PLACEHOLDER_TEMPLATES.find((t) => t.id === templateId);
+    const template = emailTemplates.find((t) => t.id === templateId);
     updateNodeData(node.id, {
       templateId,
       templateName: template?.name || null,
@@ -45,6 +60,14 @@ export function SendEmailPanel() {
 
   const handleLabelChange = (label: string) => {
     updateNodeData(node.id, { label });
+  };
+
+  const handleTemplateCreated = (template: Template) => {
+    // Auto-select the newly created template
+    updateNodeData(node.id, {
+      templateId: template.id,
+      templateName: template.name,
+    });
   };
 
   return (
@@ -66,16 +89,62 @@ export function SendEmailPanel() {
           onValueChange={handleTemplateChange}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select a template" />
+            <SelectValue
+              placeholder={isLoading ? "Loading templates..." : "Select a template"}
+            />
           </SelectTrigger>
           <SelectContent>
-            {PLACEHOLDER_TEMPLATES.map((template) => (
-              <SelectItem key={template.id} value={template.id}>
-                {template.name}
-              </SelectItem>
-            ))}
+            {emailTemplates.length === 0 ? (
+              <div className="px-2 py-4 text-sm text-gray-500 text-center">
+                No email templates found.
+                <br />
+                Create one below.
+              </div>
+            ) : (
+              emailTemplates.map((template) => (
+                <SelectItem key={template.id} value={template.id}>
+                  <div className="flex flex-col items-start">
+                    <span>{template.name}</span>
+                    <span className="text-xs text-gray-500 truncate max-w-[200px]">
+                      {template.subject || "No subject"}
+                    </span>
+                  </div>
+                </SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
+
+        <CreateTemplateDialog
+          channel="email"
+          onTemplateCreated={handleTemplateCreated}
+        />
+
+        {/* Template Preview */}
+        {selectedTemplate && (
+          <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-md border">
+            <div className="mb-2">
+              <span className="text-xs font-medium text-gray-500">
+                Template Preview
+              </span>
+            </div>
+            {selectedTemplate.subject && (
+              <div className="mb-2">
+                <span className="text-xs text-gray-400">Subject:</span>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {selectedTemplate.subject}
+                </p>
+              </div>
+            )}
+            <div>
+              <span className="text-xs text-gray-400">Body:</span>
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap mt-1 max-h-32 overflow-y-auto">
+                {selectedTemplate.body}
+              </p>
+            </div>
+          </div>
+        )}
+
         <p className="text-xs text-gray-500">
           Choose which email template to send.
         </p>

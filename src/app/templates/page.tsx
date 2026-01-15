@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
@@ -13,7 +12,6 @@ import {
   Copy,
   Loader2,
   FileText,
-  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +78,6 @@ const initialFormData: TemplateFormData = {
 };
 
 export default function TemplatesPage() {
-  const router = useRouter();
   const [supabaseReady, setSupabaseReady] = useState(true);
 
   // Dialog states
@@ -242,7 +239,7 @@ export default function TemplatesPage() {
 
   if (!supabaseReady) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="p-6 flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Setup Required</CardTitle>
@@ -256,192 +253,180 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/")}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Home
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Message Templates
-              </h1>
-              <p className="text-gray-500">
-                Create and manage reusable templates for SMS and email messages
-              </p>
-            </div>
-          </div>
-          <Button onClick={openCreateDialog}>
-            <Plus className="w-4 h-4 mr-2" />
-            New Template
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Message Templates
+          </h1>
+          <p className="text-gray-500">
+            Create and manage reusable templates for SMS and email messages
+          </p>
+        </div>
+        <Button onClick={openCreateDialog}>
+          <Plus className="w-4 h-4 mr-2" />
+          New Template
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-4 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search templates..."
+            value={filters.search || ""}
+            onChange={(e) => setFilters({ search: e.target.value || undefined })}
+            className="pl-10"
+          />
+        </div>
+        <Select
+          value={filters.channel || "all"}
+          onValueChange={(value) =>
+            setFilters({
+              channel: value === "all" ? undefined : (value as TemplateChannel),
+            })
+          }
+        >
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="All Channels" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Channels</SelectItem>
+            <SelectItem value="sms">SMS</SelectItem>
+            <SelectItem value="email">Email</SelectItem>
+          </SelectContent>
+        </Select>
+        {(filters.search || filters.channel) && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear Filters
           </Button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Search templates..."
-              value={filters.search || ""}
-              onChange={(e) => setFilters({ search: e.target.value || undefined })}
-              className="pl-10"
-            />
-          </div>
-          <Select
-            value={filters.channel || "all"}
-            onValueChange={(value) =>
-              setFilters({
-                channel: value === "all" ? undefined : (value as TemplateChannel),
-              })
-            }
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Channels" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Channels</SelectItem>
-              <SelectItem value="sms">SMS</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-            </SelectContent>
-          </Select>
-          {(filters.search || filters.channel) && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          )}
-        </div>
-
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-            <button className="ml-2 underline" onClick={() => setError(null)}>
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Templates List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-24">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          </div>
-        ) : templates.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                <FileText className="w-6 h-6 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">
-                No templates yet
-              </h3>
-              <p className="text-gray-500 text-center max-w-sm mb-4">
-                Create your first template to use in workflows and manual outreach.
-              </p>
-              <Button onClick={openCreateDialog}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Template
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {templates.map((template) => (
-              <Card
-                key={template.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => openEditDialog(template)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      {template.channel === "sms" ? (
-                        <MessageSquare className="w-4 h-4 text-blue-500" />
-                      ) : (
-                        <Mail className="w-4 h-4 text-purple-500" />
-                      )}
-                      <Badge variant="outline" className="text-xs">
-                        {CHANNEL_DISPLAY_NAMES[template.channel]}
-                      </Badge>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        asChild
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditDialog(template);
-                          }}
-                        >
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDuplicate(template);
-                          }}
-                        >
-                          <Copy className="w-4 h-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteTarget(template);
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                  <CardTitle className="text-base mt-2">{template.name}</CardTitle>
-                  {template.channel === "email" && template.subject && (
-                    <CardDescription className="text-xs truncate">
-                      Subject: {template.subject}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-gray-600 line-clamp-3">
-                    {template.body}
-                  </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    {extractPlaceholders(template.body).slice(0, 3).map((key) => (
-                      <Badge key={key} variant="secondary" className="text-xs">
-                        {`{{${key}}}`}
-                      </Badge>
-                    ))}
-                    {extractPlaceholders(template.body).length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{extractPlaceholders(template.body).length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         )}
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+          <button className="ml-2 underline" onClick={() => setError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Templates List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      ) : templates.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <FileText className="w-6 h-6 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">
+              No templates yet
+            </h3>
+            <p className="text-gray-500 text-center max-w-sm mb-4">
+              Create your first template to use in workflows and manual outreach.
+            </p>
+            <Button onClick={openCreateDialog}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Template
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((template) => (
+            <Card
+              key={template.id}
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => openEditDialog(template)}
+            >
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    {template.channel === "sms" ? (
+                      <MessageSquare className="w-4 h-4 text-blue-500" />
+                    ) : (
+                      <Mail className="w-4 h-4 text-purple-500" />
+                    )}
+                    <Badge variant="outline" className="text-xs">
+                      {CHANNEL_DISPLAY_NAMES[template.channel]}
+                    </Badge>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      asChild
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditDialog(template);
+                        }}
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicate(template);
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteTarget(template);
+                        }}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <CardTitle className="text-base mt-2">{template.name}</CardTitle>
+                {template.channel === "email" && template.subject && (
+                  <CardDescription className="text-xs truncate">
+                    Subject: {template.subject}
+                  </CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 line-clamp-3">
+                  {template.body}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  {extractPlaceholders(template.body).slice(0, 3).map((key) => (
+                    <Badge key={key} variant="secondary" className="text-xs">
+                      {`{{${key}}}`}
+                    </Badge>
+                  ))}
+                  {extractPlaceholders(template.body).length > 3 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{extractPlaceholders(template.body).length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Template Editor Dialog */}
       <Dialog open={isEditorOpen} onOpenChange={setIsEditorOpen}>

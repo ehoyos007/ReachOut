@@ -4,6 +4,41 @@
 
 ---
 
+## January 14, 2026 — Session 14
+
+### Summary
+Enhanced workflow editor template selection - replaced placeholder templates with real database templates, added template previews, and inline template creation dialog.
+
+### Completed
+- [x] Created `CreateTemplateDialog` component for creating templates within workflow editor
+- [x] Updated `SendSmsPanel` to fetch real SMS templates from database
+- [x] Updated `SendEmailPanel` to fetch real email templates from database
+- [x] Added template body preview in dropdown items (truncated)
+- [x] Added full template preview panel when template is selected
+- [x] SMS preview shows segment count info
+- [x] Email preview shows subject and body
+- [x] "Create New Template" button opens dialog with placeholder insertion buttons
+- [x] Newly created templates are auto-selected in the node
+- [x] Build compiles successfully
+
+### Files Changed
+- `src/components/workflow/panels/CreateTemplateDialog.tsx` — New: Reusable template creation dialog with channel-aware fields
+- `src/components/workflow/panels/SendSmsPanel.tsx` — Updated: Real templates, preview, create dialog integration
+- `src/components/workflow/panels/SendEmailPanel.tsx` — Updated: Real templates, preview, create dialog integration
+
+### Decisions Made
+- **Auto-select on create:** Newly created templates are automatically selected in the workflow node for better UX
+- **Inline preview:** Template preview shows below the dropdown rather than in a modal for quick reference
+- **Placeholder buttons:** Quick-insert buttons for common placeholders (first_name, last_name, email, phone)
+
+### Blockers / Issues Encountered
+- None
+
+### Next Steps
+- [ ] Phase 9: Polish (UI improvements, loading states, dashboard)
+
+---
+
 ## January 14, 2026 — Session 13
 
 ### Summary
@@ -732,4 +767,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 13)
+**Last Updated:** January 14, 2026 (Session 14)

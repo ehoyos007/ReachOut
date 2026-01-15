@@ -224,7 +224,7 @@ export default function ContactsPage() {
 
   if (!supabaseReady) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="p-6 flex items-center justify-center">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Setup Required</CardTitle>
@@ -266,406 +266,404 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-            <p className="text-gray-500 mt-1">
-              Manage your contacts and organize them with tags
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push("/contacts/fields")}>
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  Custom Fields
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/contacts/tags")}>
-                  <Tag className="w-4 h-4 mr-2" />
-                  Manage Tags
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="outline" onClick={() => router.push("/contacts/import")}>
-              <Upload className="w-4 h-4 mr-2" />
-              Import CSV
-            </Button>
-            <Button onClick={() => setIsCreateOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Contact
-            </Button>
-          </div>
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
+          <p className="text-gray-500">
+            Manage your contacts and organize them with tags
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Settings2 className="w-4 h-4 mr-2" />
+                Settings
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => router.push("/contacts/fields")}>
+                <Settings2 className="w-4 h-4 mr-2" />
+                Custom Fields
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/contacts/tags")}>
+                <Tag className="w-4 h-4 mr-2" />
+                Manage Tags
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" onClick={() => router.push("/contacts/import")}>
+            <Upload className="w-4 h-4 mr-2" />
+            Import CSV
+          </Button>
+          <Button onClick={() => setIsCreateOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Contact
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+          <button className="ml-2 underline" onClick={() => setError(null)}>
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Filters Row */}
+      <div className="flex items-center gap-4 mb-6">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Search contacts..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            className="pl-10"
+          />
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-            <button className="ml-2 underline" onClick={() => setError(null)}>
-              Dismiss
-            </button>
-          </div>
-        )}
+        {/* Status Filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="w-4 h-4 mr-2" />
+              Status
+              {filters.status && filters.status.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {filters.status.length}
+                </Badge>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2">
+            {(Object.keys(STATUS_DISPLAY_NAMES) as Contact["status"][]).map(
+              (status) => (
+                <div
+                  key={status}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                  onClick={() => toggleStatusFilter(status)}
+                >
+                  <Checkbox
+                    checked={filters.status?.includes(status) || false}
+                    onCheckedChange={() => toggleStatusFilter(status)}
+                  />
+                  <span className="text-sm">{STATUS_DISPLAY_NAMES[status]}</span>
+                </div>
+              )
+            )}
+          </PopoverContent>
+        </Popover>
 
-        {/* Filters Row */}
-        <div className="flex items-center gap-4 mb-6">
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              placeholder="Search contacts..."
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Status Filter */}
+        {/* Tags Filter */}
+        {tags.length > 0 && (
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4 mr-2" />
-                Status
-                {filters.status && filters.status.length > 0 && (
+                Tags
+                {filters.tags && filters.tags.length > 0 && (
                   <Badge variant="secondary" className="ml-2">
-                    {filters.status.length}
+                    {filters.tags.length}
                   </Badge>
                 )}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-48 p-2">
-              {(Object.keys(STATUS_DISPLAY_NAMES) as Contact["status"][]).map(
-                (status) => (
+              {tags.map((tag) => (
+                <div
+                  key={tag.id}
+                  className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
+                  onClick={() => toggleTagFilter(tag.id)}
+                >
+                  <Checkbox
+                    checked={filters.tags?.includes(tag.id) || false}
+                    onCheckedChange={() => toggleTagFilter(tag.id)}
+                  />
                   <div
-                    key={status}
-                    className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
-                    onClick={() => toggleStatusFilter(status)}
-                  >
-                    <Checkbox
-                      checked={filters.status?.includes(status) || false}
-                      onCheckedChange={() => toggleStatusFilter(status)}
-                    />
-                    <span className="text-sm">{STATUS_DISPLAY_NAMES[status]}</span>
-                  </div>
-                )
-              )}
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                  />
+                  <span className="text-sm">{tag.name}</span>
+                </div>
+              ))}
             </PopoverContent>
           </Popover>
-
-          {/* Tags Filter */}
-          {tags.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="w-4 h-4 mr-2" />
-                  Tags
-                  {filters.tags && filters.tags.length > 0 && (
-                    <Badge variant="secondary" className="ml-2">
-                      {filters.tags.length}
-                    </Badge>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-48 p-2">
-                {tags.map((tag) => (
-                  <div
-                    key={tag.id}
-                    className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
-                    onClick={() => toggleTagFilter(tag.id)}
-                  >
-                    <Checkbox
-                      checked={filters.tags?.includes(tag.id) || false}
-                      onCheckedChange={() => toggleTagFilter(tag.id)}
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="text-sm">{tag.name}</span>
-                  </div>
-                ))}
-              </PopoverContent>
-            </Popover>
-          )}
-
-          {/* Clear Filters */}
-          {(filters.search ||
-            (filters.status && filters.status.length > 0) ||
-            (filters.tags && filters.tags.length > 0)) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                clearFilters();
-                setSearchInput("");
-              }}
-            >
-              <X className="w-4 h-4 mr-1" />
-              Clear
-            </Button>
-          )}
-        </div>
-
-        {/* Bulk Actions */}
-        {selectedContactIds.size > 0 && (
-          <div className="flex items-center gap-4 mb-4 p-3 bg-blue-50 rounded-lg">
-            <span className="text-sm text-blue-700">
-              {selectedContactIds.size} contact
-              {selectedContactIds.size !== 1 ? "s" : ""} selected
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={deselectAllContacts}
-            >
-              Clear Selection
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Selected
-            </Button>
-          </div>
         )}
 
-        {/* Contacts Table */}
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : contacts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <Users className="w-6 h-6 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">
-                  No contacts found
-                </h3>
-                <p className="text-gray-500 text-center max-w-sm mb-4">
-                  {filters.search || filters.status?.length || filters.tags?.length
-                    ? "Try adjusting your filters to find contacts."
-                    : "Add your first contact to get started."}
-                </p>
-                {!filters.search &&
-                  !filters.status?.length &&
-                  !filters.tags?.length && (
-                    <Button onClick={() => setIsCreateOpen(true)}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Contact
-                    </Button>
-                  )}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={() => {
-                          if (allSelected) {
-                            deselectAllContacts();
-                          } else {
-                            selectAllContacts();
-                          }
-                        }}
-                        aria-label="Select all"
-                      />
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tags</TableHead>
-                    <TableHead>Added</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {contacts.map((contact) => (
-                    <TableRow
-                      key={contact.id}
-                      className={`cursor-pointer hover:bg-gray-50 ${
-                        selectedContactIds.has(contact.id) ? "bg-blue-50" : ""
-                      }`}
-                      onClick={(e) => {
-                        // Don't navigate if clicking checkbox or dropdown
-                        const target = e.target as HTMLElement;
-                        if (target.closest('button') || target.closest('[role="checkbox"]')) {
-                          return;
-                        }
-                        router.push(`/contacts/${contact.id}`);
-                      }}
-                    >
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedContactIds.has(contact.id)}
-                          onCheckedChange={() =>
-                            toggleContactSelection(contact.id)
-                          }
-                          aria-label={`Select ${getContactDisplayName(contact)}`}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
-                            {getContactInitials(contact)}
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">
-                              {getContactDisplayName(contact)}
-                            </div>
-                            {contact.do_not_contact && (
-                              <div className="flex items-center text-xs text-red-600">
-                                <Ban className="w-3 h-3 mr-1" />
-                                Do not contact
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {contact.email ? (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Mail className="w-3 h-3 mr-1.5 text-gray-400" />
-                            {contact.email}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {contact.phone ? (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Phone className="w-3 h-3 mr-1.5 text-gray-400" />
-                            {formatPhoneNumber(contact.phone)}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`${STATUS_COLORS[contact.status]} border-0`}
-                        >
-                          {STATUS_DISPLAY_NAMES[contact.status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {contact.tags.length > 0 ? (
-                            contact.tags.slice(0, 3).map((tag) => (
-                              <Badge
-                                key={tag.id}
-                                variant="outline"
-                                className="text-xs"
-                                style={{
-                                  borderColor: tag.color,
-                                  color: tag.color,
-                                }}
-                              >
-                                {tag.name}
-                              </Badge>
-                            ))
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
-                          {contact.tags.length > 3 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{contact.tags.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-500">
-                        {formatDate(contact.created_at)}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() =>
-                                router.push(`/contacts/${contact.id}`)
-                              }
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => setDeleteTarget(contact)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t">
-              <div className="text-sm text-gray-500">
-                Showing {(currentPage - 1) * pageSize + 1} to{" "}
-                {Math.min(currentPage * pageSize, totalContacts)} of{" "}
-                {totalContacts} contacts
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                <div className="text-sm text-gray-600">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </Card>
+        {/* Clear Filters */}
+        {(filters.search ||
+          (filters.status && filters.status.length > 0) ||
+          (filters.tags && filters.tags.length > 0)) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              clearFilters();
+              setSearchInput("");
+            }}
+          >
+            <X className="w-4 h-4 mr-1" />
+            Clear
+          </Button>
+        )}
       </div>
+
+      {/* Bulk Actions */}
+      {selectedContactIds.size > 0 && (
+        <div className="flex items-center gap-4 mb-4 p-3 bg-blue-50 rounded-lg">
+          <span className="text-sm text-blue-700">
+            {selectedContactIds.size} contact
+            {selectedContactIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={deselectAllContacts}
+          >
+            Clear Selection
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleBulkDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete Selected
+          </Button>
+        </div>
+      )}
+
+      {/* Contacts Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                <Users className="w-6 h-6 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                No contacts found
+              </h3>
+              <p className="text-gray-500 text-center max-w-sm mb-4">
+                {filters.search || filters.status?.length || filters.tags?.length
+                  ? "Try adjusting your filters to find contacts."
+                  : "Add your first contact to get started."}
+              </p>
+              {!filters.search &&
+                !filters.status?.length &&
+                !filters.tags?.length && (
+                  <Button onClick={() => setIsCreateOpen(true)}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Contact
+                  </Button>
+                )}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={() => {
+                        if (allSelected) {
+                          deselectAllContacts();
+                        } else {
+                          selectAllContacts();
+                        }
+                      }}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tags</TableHead>
+                  <TableHead>Added</TableHead>
+                  <TableHead className="w-12"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {contacts.map((contact) => (
+                  <TableRow
+                    key={contact.id}
+                    className={`cursor-pointer hover:bg-gray-50 ${
+                      selectedContactIds.has(contact.id) ? "bg-blue-50" : ""
+                    }`}
+                    onClick={(e) => {
+                      // Don't navigate if clicking checkbox or dropdown
+                      const target = e.target as HTMLElement;
+                      if (target.closest('button') || target.closest('[role="checkbox"]')) {
+                        return;
+                      }
+                      router.push(`/contacts/${contact.id}`);
+                    }}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedContactIds.has(contact.id)}
+                        onCheckedChange={() =>
+                          toggleContactSelection(contact.id)
+                        }
+                        aria-label={`Select ${getContactDisplayName(contact)}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-medium text-gray-600">
+                          {getContactInitials(contact)}
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {getContactDisplayName(contact)}
+                          </div>
+                          {contact.do_not_contact && (
+                            <div className="flex items-center text-xs text-red-600">
+                              <Ban className="w-3 h-3 mr-1" />
+                              Do not contact
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {contact.email ? (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Mail className="w-3 h-3 mr-1.5 text-gray-400" />
+                          {contact.email}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {contact.phone ? (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Phone className="w-3 h-3 mr-1.5 text-gray-400" />
+                          {formatPhoneNumber(contact.phone)}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`${STATUS_COLORS[contact.status]} border-0`}
+                      >
+                        {STATUS_DISPLAY_NAMES[contact.status]}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {contact.tags.length > 0 ? (
+                          contact.tags.slice(0, 3).map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              variant="outline"
+                              className="text-xs"
+                              style={{
+                                borderColor: tag.color,
+                                color: tag.color,
+                              }}
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                        {contact.tags.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{contact.tags.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {formatDate(contact.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              router.push(`/contacts/${contact.id}`)
+                            }
+                          >
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => setDeleteTarget(contact)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * pageSize + 1} to{" "}
+              {Math.min(currentPage * pageSize, totalContacts)} of{" "}
+              {totalContacts} contacts
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
 
       {/* Create Contact Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

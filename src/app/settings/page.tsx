@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Save,
   Loader2,
   CheckCircle2,
@@ -13,7 +11,6 @@ import {
   Send,
   Phone,
   Mail,
-  Settings2,
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -39,7 +36,6 @@ import {
 } from "@/types/settings";
 
 export default function SettingsPage() {
-  const router = useRouter();
   const [supabaseReady, setSupabaseReady] = useState(true);
   const [activeTab, setActiveTab] = useState<"twilio" | "sendgrid">("twilio");
 
@@ -224,7 +220,7 @@ export default function SettingsPage() {
 
   if (!supabaseReady) {
     return (
-      <div className="container max-w-4xl py-8">
+      <div className="p-6">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Configuration Required</AlertTitle>
@@ -241,18 +237,12 @@ export default function SettingsPage() {
   const sendgridSettings = getProviderSettings("sendgrid");
 
   return (
-    <div className="container max-w-4xl py-8">
+    <div className="p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Settings2 className="h-8 w-8" />
-            Settings
-          </h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-500">
             Configure your messaging providers
           </p>
         </div>
