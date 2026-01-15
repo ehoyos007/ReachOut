@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useNotificationStore } from "@/lib/store/notificationStore";
-import type { NotificationWithRelations } from "@/types/notification";
+import { getNotificationIcon, type NotificationWithRelations } from "@/types/notification";
 
 function formatTimeAgo(dateString: string): string {
   const date = new Date(dateString);
