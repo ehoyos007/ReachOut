@@ -4,6 +4,52 @@
 
 ---
 
+## January 15, 2026 — Session 35
+
+### Summary
+Implemented Message Preview feature for Send SMS and Send Email nodes - Users can now send test messages with rendered variables before workflows run.
+
+### Completed
+- [x] Created message-renderer.ts utility with variable extraction, substitution, and preview marking
+- [x] Created /api/messages/preview endpoint for sending ephemeral preview messages
+- [x] Added preview_preferences setting type for storing default preview endpoints
+- [x] Created previewStore.ts Zustand store for preview preferences persistence
+- [x] Created useMessagePreview hook encapsulating all preview logic
+- [x] Created TestDataConfig component for editing test variable values
+- [x] Created PreviewPanel component with collapsible UI
+- [x] Integrated PreviewPanel into SendSmsPanel
+- [x] Integrated PreviewPanel into SendEmailPanel
+- [x] Added preview message marking ([PREVIEW] prefix for SMS, HTML banner for email)
+
+### Files Changed
+- `src/lib/message-renderer.ts` — New: Variable rendering utility with defaults and preview marking
+- `src/app/api/messages/preview/route.ts` — New: API endpoint for sending preview messages
+- `src/lib/store/previewStore.ts` — New: Zustand store for preview preferences
+- `src/hooks/useMessagePreview.ts` — New: Hook for preview logic (recipient, testData, validation, sending)
+- `src/components/workflow/panels/TestDataConfig.tsx` — New: Test data editor component
+- `src/components/workflow/panels/PreviewPanel.tsx` — New: Main preview UI component
+- `src/types/settings.ts` — Extended: Added preview_preferences key and PreviewPreferences type
+- `src/lib/supabase.ts` — Extended: Added getPreviewPreferences() and updatePreviewPreferences()
+- `src/components/workflow/panels/SendSmsPanel.tsx` — Updated: Integrated PreviewPanel
+- `src/components/workflow/panels/SendEmailPanel.tsx` — Updated: Integrated PreviewPanel
+
+### Decisions Made
+- **Preview storage:** Ephemeral (not stored in database) - previews are fire-and-forget
+- **Preferences storage:** Settings table as JSON following sender identities pattern
+- **Default test data:** John Smith, Acme Inc, (555) 123-4567, etc.
+- **Email tracking:** Disabled click/open tracking for preview messages
+- **Preview marking:** SMS uses [PREVIEW] prefix; Email uses subject prefix + HTML warning banner
+
+### Blockers / Issues Encountered
+- **TypeScript Set spreading:** Fixed by using Array.from(new Set(...)) instead of [...new Set(...)]
+
+### Next Steps
+- [ ] Test preview feature end-to-end with real Twilio/SendGrid credentials
+- [ ] Consider adding preview history/log (currently ephemeral)
+- [ ] Consider SMS cost warning in UI
+
+---
+
 ## January 15, 2026 — Session 34
 
 ### Summary
