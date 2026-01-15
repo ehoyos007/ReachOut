@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -36,7 +36,46 @@ import { useSendTemplateEmail } from "@/hooks/useSendTemplateEmail";
 import { validateVariables, buildDynamicData } from "@/utils/templateParser";
 import type { Contact } from "@/types/contact";
 
+// Loading fallback for Suspense boundary
+function ComposeEmailLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-10 border-b bg-white">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10" />
+            <div>
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="mt-1 h-4 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-24" />
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-6">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-60 w-full" />
+          </div>
+          <Skeleton className="h-[500px] w-full" />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Main page component wrapped in Suspense
 export default function ComposeEmailPage() {
+  return (
+    <Suspense fallback={<ComposeEmailLoading />}>
+      <ComposeEmailContent />
+    </Suspense>
+  );
+}
+
+// Content component that uses useSearchParams
+function ComposeEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
