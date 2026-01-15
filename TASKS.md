@@ -33,6 +33,11 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ## To Do
 
+### SendGrid Template Integration (Post-MVP)
+- [x] Database migration 012 (email_templates cache table) - deployed to Supabase
+- [ ] Test end-to-end with real SendGrid templates
+- [ ] Integrate template selection into BulkEmailModal
+
 ### Scheduling Features (Post-MVP)
 - [x] Test scheduling flow end-to-end (verified Jan 15, 2026)
 
@@ -315,4 +320,4 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 22)
+**Last Updated:** January 15, 2026 (Session 40)
