@@ -160,11 +160,274 @@ export interface UpdateTagInput extends Partial<CreateTagInput> {
 // Filter & Pagination Types
 // =============================================================================
 
+// Basic filters (for backward compatibility)
 export interface ContactFilters {
   search?: string; // Search in first_name, last_name, email, phone
   status?: Contact["status"][];
   tags?: string[]; // Tag IDs
   do_not_contact?: boolean;
+}
+
+// =============================================================================
+// Advanced Filter Types
+// =============================================================================
+
+// Filter operators by field type
+export type TextOperator =
+  | "equals"
+  | "not_equals"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "ends_with"
+  | "is_empty"
+  | "is_not_empty";
+
+export type NumberOperator =
+  | "equals"
+  | "not_equals"
+  | "greater_than"
+  | "less_than"
+  | "between"
+  | "is_empty"
+  | "is_not_empty";
+
+export type DateOperator =
+  | "equals"
+  | "before"
+  | "after"
+  | "between"
+  | "is_empty"
+  | "is_not_empty"
+  | "last_7_days"
+  | "last_30_days"
+  | "last_90_days"
+  | "this_month"
+  | "this_year";
+
+export type TagOperator =
+  | "has_any"
+  | "has_all"
+  | "has_none";
+
+export type StatusOperator =
+  | "is"
+  | "is_not";
+
+export type FilterOperator = TextOperator | NumberOperator | DateOperator | TagOperator | StatusOperator;
+
+// Filter field types
+export type FilterFieldType = "text" | "number" | "date" | "status" | "tags" | "boolean";
+
+// Standard filterable fields
+export interface FilterableField {
+  id: string;
+  label: string;
+  type: FilterFieldType;
+  field: string; // The actual field name in the contact object
+}
+
+// A single filter condition
+export interface FilterCondition {
+  id: string;
+  field: string; // Field name (e.g., "first_name", "status", "tags")
+  fieldType: FilterFieldType;
+  operator: FilterOperator;
+  value: string | string[] | null; // Value(s) to compare against
+  value2?: string | null; // For "between" operators
+}
+
+// Filter group with logic
+export interface FilterGroup {
+  id: string;
+  logic: "and" | "or";
+  conditions: FilterCondition[];
+}
+
+// Advanced filters structure
+export interface AdvancedFilters {
+  groups: FilterGroup[];
+  groupLogic: "and" | "or"; // Logic between groups
+}
+
+// =============================================================================
+// Saved Views Types
+// =============================================================================
+
+export interface SavedView {
+  id: string;
+  name: string;
+  filters: AdvancedFilters;
+  icon: string;
+  color: string;
+  is_default: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSavedViewInput {
+  name: string;
+  filters: AdvancedFilters;
+  icon?: string;
+  color?: string;
+  is_default?: boolean;
+}
+
+export interface UpdateSavedViewInput extends Partial<CreateSavedViewInput> {
+  id: string;
+}
+
+// =============================================================================
+// Filter Constants
+// =============================================================================
+
+export const STANDARD_FILTERABLE_FIELDS: FilterableField[] = [
+  { id: "first_name", label: "First Name", type: "text", field: "first_name" },
+  { id: "last_name", label: "Last Name", type: "text", field: "last_name" },
+  { id: "email", label: "Email", type: "text", field: "email" },
+  { id: "phone", label: "Phone", type: "text", field: "phone" },
+  { id: "status", label: "Status", type: "status", field: "status" },
+  { id: "tags", label: "Tags", type: "tags", field: "tags" },
+  { id: "do_not_contact", label: "Do Not Contact", type: "boolean", field: "do_not_contact" },
+  { id: "created_at", label: "Created Date", type: "date", field: "created_at" },
+  { id: "updated_at", label: "Updated Date", type: "date", field: "updated_at" },
+];
+
+export const TEXT_OPERATORS: { value: TextOperator; label: string }[] = [
+  { value: "equals", label: "equals" },
+  { value: "not_equals", label: "does not equal" },
+  { value: "contains", label: "contains" },
+  { value: "not_contains", label: "does not contain" },
+  { value: "starts_with", label: "starts with" },
+  { value: "ends_with", label: "ends with" },
+  { value: "is_empty", label: "is empty" },
+  { value: "is_not_empty", label: "is not empty" },
+];
+
+export const NUMBER_OPERATORS: { value: NumberOperator; label: string }[] = [
+  { value: "equals", label: "equals" },
+  { value: "not_equals", label: "does not equal" },
+  { value: "greater_than", label: "is greater than" },
+  { value: "less_than", label: "is less than" },
+  { value: "between", label: "is between" },
+  { value: "is_empty", label: "is empty" },
+  { value: "is_not_empty", label: "is not empty" },
+];
+
+export const DATE_OPERATORS: { value: DateOperator; label: string }[] = [
+  { value: "equals", label: "is on" },
+  { value: "before", label: "is before" },
+  { value: "after", label: "is after" },
+  { value: "between", label: "is between" },
+  { value: "last_7_days", label: "in last 7 days" },
+  { value: "last_30_days", label: "in last 30 days" },
+  { value: "last_90_days", label: "in last 90 days" },
+  { value: "this_month", label: "this month" },
+  { value: "this_year", label: "this year" },
+  { value: "is_empty", label: "is empty" },
+  { value: "is_not_empty", label: "is not empty" },
+];
+
+export const TAG_OPERATORS: { value: TagOperator; label: string }[] = [
+  { value: "has_any", label: "has any of" },
+  { value: "has_all", label: "has all of" },
+  { value: "has_none", label: "has none of" },
+];
+
+export const STATUS_OPERATORS: { value: StatusOperator; label: string }[] = [
+  { value: "is", label: "is" },
+  { value: "is_not", label: "is not" },
+];
+
+export const BOOLEAN_OPERATORS = [
+  { value: "is_true", label: "is true" },
+  { value: "is_false", label: "is false" },
+];
+
+export const SAVED_VIEW_ICONS = [
+  "filter",
+  "users",
+  "star",
+  "heart",
+  "flag",
+  "bookmark",
+  "zap",
+  "target",
+  "trending-up",
+  "award",
+  "briefcase",
+  "phone",
+  "mail",
+  "clock",
+];
+
+export const SAVED_VIEW_COLORS = [
+  "#6366f1", // Indigo
+  "#3b82f6", // Blue
+  "#14b8a6", // Teal
+  "#22c55e", // Green
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#8b5cf6", // Violet
+  "#ec4899", // Pink
+];
+
+// =============================================================================
+// Filter Helper Functions
+// =============================================================================
+
+export function createEmptyFilterCondition(): FilterCondition {
+  return {
+    id: crypto.randomUUID(),
+    field: "first_name",
+    fieldType: "text",
+    operator: "contains",
+    value: "",
+  };
+}
+
+export function createEmptyFilterGroup(): FilterGroup {
+  return {
+    id: crypto.randomUUID(),
+    logic: "and",
+    conditions: [createEmptyFilterCondition()],
+  };
+}
+
+export function createEmptyAdvancedFilters(): AdvancedFilters {
+  return {
+    groups: [],
+    groupLogic: "and",
+  };
+}
+
+export function getOperatorsForFieldType(fieldType: FilterFieldType): { value: string; label: string }[] {
+  switch (fieldType) {
+    case "text":
+      return TEXT_OPERATORS;
+    case "number":
+      return NUMBER_OPERATORS;
+    case "date":
+      return DATE_OPERATORS;
+    case "tags":
+      return TAG_OPERATORS;
+    case "status":
+      return STATUS_OPERATORS;
+    case "boolean":
+      return BOOLEAN_OPERATORS;
+    default:
+      return TEXT_OPERATORS;
+  }
+}
+
+export function hasActiveFilters(filters: AdvancedFilters): boolean {
+  return filters.groups.length > 0 &&
+    filters.groups.some(group => group.conditions.length > 0);
+}
+
+export function countActiveFilters(filters: AdvancedFilters): number {
+  return filters.groups.reduce((count, group) => count + group.conditions.length, 0);
 }
 
 export interface ContactPagination {

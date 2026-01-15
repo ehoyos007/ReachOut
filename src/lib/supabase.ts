@@ -1830,3 +1830,159 @@ export async function getDefaultSender(
     return emails.find((e) => e.is_default) || emails[0] || null;
   }
 }
+
+// =============================================================================
+// Saved Views Operations
+// =============================================================================
+
+import type {
+  SavedView,
+  CreateSavedViewInput,
+  UpdateSavedViewInput,
+  AdvancedFilters,
+} from "@/types/contact";
+
+/**
+ * Get all saved views
+ */
+export async function getSavedViews(): Promise<SavedView[]> {
+  const { data, error } = await getSupabase()
+    .from("contact_views")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error) throw error;
+
+  // Parse the filters JSON field
+  return (data || []).map((view) => ({
+    ...view,
+    filters: (typeof view.filters === "string"
+      ? JSON.parse(view.filters)
+      : view.filters) as AdvancedFilters,
+  })) as SavedView[];
+}
+
+/**
+ * Get a single saved view by ID
+ */
+export async function getSavedView(id: string): Promise<SavedView | null> {
+  const { data, error } = await getSupabase()
+    .from("contact_views")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") return null;
+    throw error;
+  }
+
+  return {
+    ...data,
+    filters: (typeof data.filters === "string"
+      ? JSON.parse(data.filters)
+      : data.filters) as AdvancedFilters,
+  } as SavedView;
+}
+
+/**
+ * Create a new saved view
+ */
+export async function createSavedView(
+  input: CreateSavedViewInput
+): Promise<SavedView> {
+  // Get current max sort order
+  const views = await getSavedViews();
+  const maxSortOrder = views.reduce(
+    (max, v) => Math.max(max, v.sort_order),
+    -1
+  );
+
+  const { data, error } = await getSupabase()
+    .from("contact_views")
+    .insert({
+      name: input.name,
+      filters: input.filters,
+      icon: input.icon || "filter",
+      color: input.color || "#6366f1",
+      is_default: input.is_default || false,
+      sort_order: maxSortOrder + 1,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    ...data,
+    filters: (typeof data.filters === "string"
+      ? JSON.parse(data.filters)
+      : data.filters) as AdvancedFilters,
+  } as SavedView;
+}
+
+/**
+ * Update an existing saved view
+ */
+export async function updateSavedView(
+  input: UpdateSavedViewInput
+): Promise<SavedView> {
+  const { id, ...updates } = input;
+
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (updates.name !== undefined) updateData.name = updates.name;
+  if (updates.filters !== undefined) updateData.filters = updates.filters;
+  if (updates.icon !== undefined) updateData.icon = updates.icon;
+  if (updates.color !== undefined) updateData.color = updates.color;
+  if (updates.is_default !== undefined) updateData.is_default = updates.is_default;
+
+  const { data, error } = await getSupabase()
+    .from("contact_views")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return {
+    ...data,
+    filters: (typeof data.filters === "string"
+      ? JSON.parse(data.filters)
+      : data.filters) as AdvancedFilters,
+  } as SavedView;
+}
+
+/**
+ * Delete a saved view
+ */
+export async function deleteSavedView(id: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("contact_views")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+/**
+ * Reorder saved views
+ */
+export async function reorderSavedViews(
+  viewIds: string[]
+): Promise<void> {
+  const client = getSupabase();
+
+  // Update each view with its new sort order
+  for (let i = 0; i < viewIds.length; i++) {
+    const { error } = await client
+      .from("contact_views")
+      .update({ sort_order: i })
+      .eq("id", viewIds[i]);
+
+    if (error) throw error;
+  }
+}
