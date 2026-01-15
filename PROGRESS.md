@@ -4,6 +4,32 @@
 
 ---
 
+## January 15, 2026 — Session 37
+
+### Summary
+Fixed trigger nodes displaying placeholder tags instead of real database tags when using "When tag added" trigger type.
+
+### Completed
+- [x] Identified hardcoded `MOCK_TAGS` array in TriggerStartPanel.tsx
+- [x] Replaced mock data with real tags from `useContactStore()` hook
+- [x] Added loading state with spinner while fetching tags
+- [x] Added empty state with guidance when no tags exist
+- [x] Enhanced tag display with color indicators from database
+- [x] Updated selected tag badges to show colors
+
+### Files Changed
+- `src/components/workflow/panels/TriggerStartPanel.tsx` — Fixed: Replaced MOCK_TAGS with real database tags via useContactStore, added loading/empty states, added tag color display
+
+### Decisions Made
+- **Reuse existing infrastructure:** Used the already-implemented `useContactStore` hook and `fetchTags()` rather than creating new fetch logic
+- **Color display:** Added tag color indicators to both the checkbox list and selected tag badges for visual consistency with Contacts section
+
+### Next Steps
+- [ ] Test trigger node with real tags in workflow execution
+- [ ] Consider caching improvements if tag fetch is slow
+
+---
+
 ## January 15, 2026 — Session 36
 
 ### Summary

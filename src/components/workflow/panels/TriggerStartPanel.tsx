@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useWorkflowStore } from "@/lib/store/workflowStore";
+import { useContactStore } from "@/lib/store/contactStore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -28,16 +30,7 @@ import {
   STATUS_DISPLAY_NAMES,
   DAY_OF_WEEK_NAMES,
 } from "@/types/workflow";
-import { Plus, Trash2 } from "lucide-react";
-
-// Mock tags for now - would come from database
-const MOCK_TAGS = [
-  { id: "tag-1", name: "VIP" },
-  { id: "tag-2", name: "Lead" },
-  { id: "tag-3", name: "Customer" },
-  { id: "tag-4", name: "Prospect" },
-  { id: "tag-5", name: "Newsletter" },
-];
+import { Plus, Trash2, Loader2 } from "lucide-react";
 
 const VARIABLE_TYPES: { value: VariableType; label: string }[] = [
   { value: "string", label: "Text" },
@@ -204,6 +197,15 @@ function TagAddedConfig({
   config: TriggerConfig & { type: "tag_added" };
   onUpdate: (updates: Partial<TriggerConfig>) => void;
 }) {
+  const { tags, fetchTags, isLoading } = useContactStore();
+
+  // Fetch tags on mount if not already loaded
+  useEffect(() => {
+    if (tags.length === 0) {
+      fetchTags();
+    }
+  }, [tags.length, fetchTags]);
+
   const toggleTag = (tagId: string) => {
     const current = config.tagIds || [];
     const newTagIds = current.includes(tagId)
@@ -239,29 +241,55 @@ function TagAddedConfig({
       {/* Tag Selection */}
       <div className="space-y-2">
         <Label>Select Tags</Label>
-        <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
-          {MOCK_TAGS.map((tag) => (
-            <div key={tag.id} className="flex items-center space-x-2">
-              <Checkbox
-                id={tag.id}
-                checked={config.tagIds?.includes(tag.id) || false}
-                onCheckedChange={() => toggleTag(tag.id)}
-              />
-              <label
-                htmlFor={tag.id}
-                className="text-sm font-medium leading-none cursor-pointer"
-              >
-                {tag.name}
-              </label>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-4">
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+            <span className="ml-2 text-sm text-gray-500">Loading tags...</span>
+          </div>
+        ) : tags.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+            <p className="text-sm text-gray-500">
+              No tags found. Create tags in the Contacts section to use this trigger.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+            {tags.map((tag) => (
+              <div key={tag.id} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`tag-${tag.id}`}
+                  checked={config.tagIds?.includes(tag.id) || false}
+                  onCheckedChange={() => toggleTag(tag.id)}
+                />
+                <div
+                  className="h-3 w-3 rounded-full"
+                  style={{ backgroundColor: tag.color }}
+                />
+                <label
+                  htmlFor={`tag-${tag.id}`}
+                  className="text-sm font-medium leading-none cursor-pointer"
+                >
+                  {tag.name}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
         {config.tagIds && config.tagIds.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {config.tagIds.map((tagId) => {
-              const tag = MOCK_TAGS.find((t) => t.id === tagId);
+              const tag = tags.find((t) => t.id === tagId);
               return tag ? (
-                <Badge key={tagId} variant="secondary">
+                <Badge
+                  key={tagId}
+                  variant="secondary"
+                  style={{ borderColor: tag.color }}
+                  className="border"
+                >
+                  <div
+                    className="mr-1 h-2 w-2 rounded-full"
+                    style={{ backgroundColor: tag.color }}
+                  />
                   {tag.name}
                 </Badge>
               ) : null;
