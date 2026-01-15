@@ -4,6 +4,47 @@
 
 ---
 
+## January 15, 2026 — Session 22
+
+### Summary
+Implemented Phase 2 Conditional Tagging - Rule-based tag assignment during CSV import with column-value matching and preview.
+
+### Completed
+- [x] Added conditional tagging types (RuleOperator, ConditionalTagRule)
+- [x] Built 10 operators: equals, not_equals, contains, not_contains, starts_with, ends_with, is_empty, is_not_empty, greater_than, less_than
+- [x] Created rule builder UI with column/operator/value/tag selectors
+- [x] Added collapsible "Conditional Tagging" section in mapping step
+- [x] Implemented rule evaluation function for per-row matching
+- [x] Updated preview table with Tags column showing static + conditional tags
+- [x] Added filter icon indicator for conditionally applied tags
+- [x] Added conditional rules summary in preview with match counts
+- [x] Updated import loop to apply tags from rules (merged with static tags)
+- [x] Build compiles successfully with no errors
+
+### Files Changed
+- `src/app/contacts/import/page.tsx` — Major update: Added conditional tagging feature (+200 lines)
+  - Added RuleOperator type and ConditionalTagRule interface
+  - Added OPERATORS constant with 10 rule operators
+  - Added conditional rules state and management functions
+  - Added rule builder UI in mapping step
+  - Updated preview table with Tags column
+  - Added conditional rules summary with match counts
+  - Updated import loop to use getTagsForRow()
+
+### Decisions Made
+- **Case-insensitive matching:** All string comparisons are case-insensitive for better UX
+- **Static + Conditional merge:** Tags from rules merge with manually selected tags (no duplicates)
+- **Filter icon:** Small filter icon on conditionally-applied tags in preview to differentiate from static tags
+- **Match counts:** Show how many rows each rule matches in the preview summary
+
+### Blockers / Issues Encountered
+- **Build cache issue:** Initial build failed due to stale cache, resolved by clearing .next directory
+
+### Next Steps
+- [ ] Test scheduling flow end-to-end (in progress by other instance)
+
+---
+
 ## January 15, 2026 — Session 21
 
 ### Summary
@@ -1101,4 +1142,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 21)
+**Last Updated:** January 15, 2026 (Session 22)

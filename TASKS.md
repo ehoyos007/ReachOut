@@ -18,10 +18,11 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ### Feature: Bulk Tag Assignment in Import Wizard
 
-**Phase 2: Conditional Tagging (Future Enhancement)**
-- [ ] Rule builder: "If [column] [operator] [value], apply [tag]"
-- [ ] Evaluate rules per row during import
-- [ ] Preview conditional results
+**Phase 2: Conditional Tagging (Completed Jan 15, 2026)**
+- [x] Rule builder: "If [column] [operator] [value], apply [tag]"
+- [x] Evaluate rules per row during import
+- [x] Preview conditional results per row with tag badges
+- [x] Show match counts in preview summary
 
 ---
 
@@ -294,4 +295,4 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 21)
+**Last Updated:** January 15, 2026 (Session 22)
