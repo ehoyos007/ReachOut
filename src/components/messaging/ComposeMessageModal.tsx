@@ -40,6 +40,8 @@ interface ComposeMessageModalProps {
   onOpenChange: (open: boolean) => void;
   contact: ContactWithRelations;
   initialChannel?: MessageChannel;
+  initialBody?: string;
+  initialSubject?: string;
   customFields?: CustomField[];
 }
 
@@ -48,6 +50,8 @@ export function ComposeMessageModal({
   onOpenChange,
   contact,
   initialChannel = "sms",
+  initialBody = "",
+  initialSubject = "",
   customFields = [],
 }: ComposeMessageModalProps) {
   // Form state
@@ -69,14 +73,14 @@ export function ComposeMessageModal({
   useEffect(() => {
     if (open) {
       setChannel(initialChannel);
-      setSubject("");
-      setBody("");
+      setSubject(initialSubject);
+      setBody(initialBody);
       setSenderId(null);
       setScheduledAt(null);
       setSelectedTemplateId(null);
       clearError();
     }
-  }, [open, initialChannel, clearError]);
+  }, [open, initialChannel, initialBody, initialSubject, clearError]);
 
   // Check if we can send via this channel
   const canSendSms = isTwilioConfigured && !!contact.phone;

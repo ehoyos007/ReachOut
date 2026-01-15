@@ -8,7 +8,7 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ## In Progress
 
-### Feature: Sent Messages Dashboard
+### Feature: Sent Messages Dashboard - COMPLETE
 **Plan:** `plans/PLAN-sent-messages-dashboard.md`
 
 **Phase 1: Page & Route Setup** - COMPLETE
@@ -22,12 +22,12 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 - [x] Implement expandable row details with contact info
 - [x] Add pagination
 
-**Phase 2-6: Remaining Features** (Ready to implement)
-- [ ] Date range picker filter
-- [ ] Column header sorting
-- [ ] Resend message action (opens composer pre-filled)
-- [ ] "View Full Message" modal for long emails
-- [ ] Contact tags display in expanded view
+**Phase 2-6: Remaining Features** - COMPLETE
+- [x] Date range picker filter (popover with from/to date inputs)
+- [x] Column header sorting (click to toggle asc/desc on Type, Status, Sent columns)
+- [x] Resend message action (navigates to contact with pre-filled compose modal)
+- [x] "View Full Message" modal for long emails (opens on messages >500 chars)
+- [x] Contact tags display in expanded view (with color-coded badges)
 
 ---
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
+import type { MessageChannel } from "@/types/message";
 import {
   ArrowLeft,
   Mail,
@@ -84,7 +85,14 @@ const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
 export default function ContactDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const contactId = params.id as string;
+
+  // Read compose params from URL (for resend feature)
+  const composeFromUrl = searchParams.get("compose") === "true";
+  const composeChannelFromUrl = (searchParams.get("channel") as MessageChannel) || "sms";
+  const composeBodyFromUrl = searchParams.get("body") || "";
+  const composeSubjectFromUrl = searchParams.get("subject") || "";
 
   const [supabaseReady, setSupabaseReady] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -93,6 +101,14 @@ export default function ContactDetailPage() {
   const [editTags, setEditTags] = useState<string[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+
+  // Handle clearing URL params when compose modal closes
+  const handleComposeClose = () => {
+    if (composeFromUrl) {
+      // Remove compose params from URL without page reload
+      router.replace(`/contacts/${contactId}`, { scroll: false });
+    }
+  };
 
   const {
     currentContact,
@@ -566,6 +582,11 @@ export default function ContactDetailPage() {
               contactCreatedAt={currentContact.created_at}
               contact={currentContact}
               customFields={customFields}
+              initialComposeOpen={composeFromUrl}
+              initialComposeChannel={composeChannelFromUrl}
+              initialComposeBody={composeBodyFromUrl}
+              initialComposeSubject={composeSubjectFromUrl}
+              onComposeClose={handleComposeClose}
             />
           </div>
 

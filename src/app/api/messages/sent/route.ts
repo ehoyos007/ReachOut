@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSentMessagesWithContact } from "@/lib/supabase";
 import type { MessageChannel, MessageStatus } from "@/types/message";
+import type { SentMessagesSortField, SentMessagesSortOrder } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || undefined;
     const dateFrom = searchParams.get("dateFrom") || undefined;
     const dateTo = searchParams.get("dateTo") || undefined;
+    const sortBy = searchParams.get("sortBy") as SentMessagesSortField | null;
+    const sortOrder = searchParams.get("sortOrder") as SentMessagesSortOrder | null;
 
     // Build filters
     const filters = {
@@ -25,6 +28,8 @@ export async function GET(request: NextRequest) {
       search,
       dateFrom,
       dateTo,
+      sortBy: sortBy || undefined,
+      sortOrder: sortOrder || undefined,
     };
 
     // Validate pagination

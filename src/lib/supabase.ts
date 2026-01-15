@@ -1028,8 +1028,18 @@ export interface SentMessageWithContact extends Message {
     last_name: string | null;
     email: string | null;
     phone: string | null;
+    tags?: Array<{
+      tag: {
+        id: string;
+        name: string;
+        color: string;
+      };
+    }>;
   };
 }
+
+export type SentMessagesSortField = "sent_at" | "created_at" | "status" | "channel";
+export type SentMessagesSortOrder = "asc" | "desc";
 
 export interface SentMessagesFilters {
   channel?: MessageChannel;
@@ -1037,6 +1047,8 @@ export interface SentMessagesFilters {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  sortBy?: SentMessagesSortField;
+  sortOrder?: SentMessagesSortOrder;
 }
 
 export interface SentMessagesResult {
@@ -1055,6 +1067,11 @@ export async function getSentMessagesWithContact(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
+  // Determine sort field and order
+  const sortBy = filters?.sortBy || "created_at";
+  const sortOrder = filters?.sortOrder || "desc";
+  const ascending = sortOrder === "asc";
+
   let query = client
     .from("messages")
     .select(
@@ -1065,13 +1082,20 @@ export async function getSentMessagesWithContact(
         first_name,
         last_name,
         email,
-        phone
+        phone,
+        tags:contact_tags (
+          tag:tags (
+            id,
+            name,
+            color
+          )
+        )
       )
     `,
       { count: "exact" }
     )
     .eq("direction", "outbound")
-    .order("created_at", { ascending: false });
+    .order(sortBy, { ascending });
 
   // Apply filters
   if (filters?.channel) {

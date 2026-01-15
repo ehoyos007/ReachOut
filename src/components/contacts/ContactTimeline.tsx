@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, RefreshCw, Loader2, MessageSquare, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,12 @@ interface ContactTimelineProps {
   contactCreatedAt?: string;
   contact?: ContactWithRelations;
   customFields?: CustomField[];
+  // Props for opening compose modal with pre-filled content (e.g., for resend)
+  initialComposeOpen?: boolean;
+  initialComposeChannel?: MessageChannel;
+  initialComposeBody?: string;
+  initialComposeSubject?: string;
+  onComposeClose?: () => void;
 }
 
 export function ContactTimeline({
@@ -36,10 +42,27 @@ export function ContactTimeline({
   contactCreatedAt,
   contact,
   customFields = [],
+  initialComposeOpen = false,
+  initialComposeChannel = "sms",
+  initialComposeBody = "",
+  initialComposeSubject = "",
+  onComposeClose,
 }: ContactTimelineProps) {
   const [logEventOpen, setLogEventOpen] = useState(false);
   const [composeOpen, setComposeOpen] = useState(false);
   const [composeChannel, setComposeChannel] = useState<MessageChannel>("sms");
+  const [composeBody, setComposeBody] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+
+  // Handle initial compose state (e.g., from URL params for resend)
+  useEffect(() => {
+    if (initialComposeOpen && contact) {
+      setComposeChannel(initialComposeChannel);
+      setComposeBody(initialComposeBody);
+      setComposeSubject(initialComposeSubject);
+      setComposeOpen(true);
+    }
+  }, [initialComposeOpen, initialComposeChannel, initialComposeBody, initialComposeSubject, contact]);
 
   const { isTwilioConfigured, isSendGridConfigured } = useSettingsStore();
 
@@ -63,6 +86,8 @@ export function ContactTimeline({
   // Handle compose modal
   const handleCompose = (channel: MessageChannel) => {
     setComposeChannel(channel);
+    setComposeBody(""); // Reset body when opening normally
+    setComposeSubject(""); // Reset subject when opening normally
     setComposeOpen(true);
   };
 
@@ -281,9 +306,17 @@ export function ContactTimeline({
           open={composeOpen}
           onOpenChange={(open) => {
             setComposeOpen(open);
-            if (!open) handleMessageSent();
+            if (!open) {
+              handleMessageSent();
+              // Clear initial compose values and notify parent
+              setComposeBody("");
+              setComposeSubject("");
+              onComposeClose?.();
+            }
           }}
           initialChannel={composeChannel}
+          initialBody={composeBody}
+          initialSubject={composeSubject}
           contact={contact}
           customFields={customFields}
         />

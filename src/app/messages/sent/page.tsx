@@ -19,6 +19,13 @@ import {
   Clock,
   ExternalLink,
   Copy,
+  Calendar,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  RotateCcw,
+  Tag,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -42,6 +50,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -53,6 +73,15 @@ import {
   getTimeAgo,
 } from "@/types/message";
 import type { Message, MessageChannel, MessageStatus } from "@/types/message";
+import type { SentMessagesSortField, SentMessagesSortOrder } from "@/lib/supabase";
+
+interface ContactTag {
+  tag: {
+    id: string;
+    name: string;
+    color: string;
+  };
+}
 
 interface SentMessagesResponse {
   success: boolean;
@@ -71,8 +100,14 @@ interface MessageWithContact extends Message {
     last_name: string | null;
     email: string | null;
     phone: string | null;
+    tags?: ContactTag[];
   };
 }
+
+type SortConfig = {
+  field: SentMessagesSortField;
+  order: SentMessagesSortOrder;
+} | null;
 
 export default function SentMessagesPage() {
   const router = useRouter();
@@ -90,9 +125,17 @@ export default function SentMessagesPage() {
   const [statusFilter, setStatusFilter] = useState<MessageStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+
+  // Sorting
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   // Expanded row state
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
+
+  // Full message modal
+  const [fullMessageModal, setFullMessageModal] = useState<MessageWithContact | null>(null);
 
   // Debounce search
   useEffect(() => {
@@ -122,6 +165,17 @@ export default function SentMessagesPage() {
       if (debouncedSearch) {
         params.append("search", debouncedSearch);
       }
+      if (dateFrom) {
+        params.append("dateFrom", dateFrom);
+      }
+      if (dateTo) {
+        // Add end of day to include the entire end date
+        params.append("dateTo", dateTo + "T23:59:59.999Z");
+      }
+      if (sortConfig) {
+        params.append("sortBy", sortConfig.field);
+        params.append("sortOrder", sortConfig.order);
+      }
 
       const response = await fetch(`/api/messages/sent?${params}`);
       const result: SentMessagesResponse = await response.json();
@@ -138,7 +192,7 @@ export default function SentMessagesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, channelFilter, statusFilter, debouncedSearch]);
+  }, [page, pageSize, channelFilter, statusFilter, debouncedSearch, dateFrom, dateTo, sortConfig]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
@@ -151,6 +205,33 @@ export default function SentMessagesPage() {
 
   const toggleRowExpanded = (id: string) => {
     setExpandedRowId(expandedRowId === id ? null : id);
+  };
+
+  const handleSort = (field: SentMessagesSortField) => {
+    setSortConfig((prev) => {
+      if (prev?.field === field) {
+        // Toggle order or clear
+        if (prev.order === "desc") {
+          return { field, order: "asc" };
+        } else {
+          return null; // Clear sorting
+        }
+      }
+      // New sort field, default to desc
+      return { field, order: "desc" };
+    });
+    setPage(1);
+  };
+
+  const getSortIcon = (field: SentMessagesSortField) => {
+    if (sortConfig?.field !== field) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 opacity-50" />;
+    }
+    return sortConfig.order === "desc" ? (
+      <ArrowDown className="w-4 h-4 ml-1" />
+    ) : (
+      <ArrowUp className="w-4 h-4 ml-1" />
+    );
   };
 
   const getContactDisplayName = (message: MessageWithContact): string => {
@@ -209,10 +290,31 @@ export default function SentMessagesPage() {
     }
   };
 
+  const handleResend = (message: MessageWithContact) => {
+    if (!message.contact) return;
+    // Navigate to contact page with compose modal params
+    const params = new URLSearchParams({
+      compose: "true",
+      channel: message.channel,
+      body: message.body,
+    });
+    if (message.subject) {
+      params.append("subject", message.subject);
+    }
+    router.push(`/contacts/${message.contact.id}?${params.toString()}`);
+  };
+
+  const clearDateRange = () => {
+    setDateFrom("");
+    setDateTo("");
+    setPage(1);
+  };
+
   const activeFilterCount = [
     channelFilter !== "all",
     statusFilter !== "all",
     debouncedSearch.length > 0,
+    dateFrom || dateTo,
   ].filter(Boolean).length;
 
   if (!supabaseReady) {
@@ -313,6 +415,79 @@ export default function SentMessagesPage() {
                 </SelectContent>
               </Select>
 
+              {/* Date Range Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={dateFrom || dateTo ? "secondary" : "outline"}
+                    size="sm"
+                    className="h-9"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    {dateFrom || dateTo ? (
+                      <span>
+                        {dateFrom && dateTo
+                          ? `${formatDateShort(dateFrom)} - ${formatDateShort(dateTo)}`
+                          : dateFrom
+                          ? `From ${formatDateShort(dateFrom)}`
+                          : `Until ${formatDateShort(dateTo)}`}
+                      </span>
+                    ) : (
+                      "Date Range"
+                    )}
+                    {(dateFrom || dateTo) && (
+                      <X
+                        className="w-3 h-3 ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearDateRange();
+                        }}
+                      />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-4" align="start">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="date-from" className="text-xs">From</Label>
+                      <Input
+                        id="date-from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => {
+                          setDateFrom(e.target.value);
+                          setPage(1);
+                        }}
+                        className="h-8"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="date-to" className="text-xs">To</Label>
+                      <Input
+                        id="date-to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => {
+                          setDateTo(e.target.value);
+                          setPage(1);
+                        }}
+                        className="h-8"
+                      />
+                    </div>
+                    {(dateFrom || dateTo) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={clearDateRange}
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+
               {/* Active Filters Badge */}
               {activeFilterCount > 0 && (
                 <Badge variant="secondary" className="ml-auto">
@@ -354,18 +529,20 @@ export default function SentMessagesPage() {
                   icon={Send}
                   title="No sent messages"
                   description={
-                    debouncedSearch || channelFilter !== "all" || statusFilter !== "all"
+                    debouncedSearch || channelFilter !== "all" || statusFilter !== "all" || dateFrom || dateTo
                       ? "No messages match your filters. Try adjusting your search criteria."
                       : "Messages you send will appear here. Send a message from any contact's detail page."
                   }
                   action={
-                    debouncedSearch || channelFilter !== "all" || statusFilter !== "all"
+                    debouncedSearch || channelFilter !== "all" || statusFilter !== "all" || dateFrom || dateTo
                       ? {
                           label: "Clear Filters",
                           onClick: () => {
                             setSearchQuery("");
                             setChannelFilter("all");
                             setStatusFilter("all");
+                            setDateFrom("");
+                            setDateTo("");
                           },
                         }
                       : {
@@ -380,11 +557,35 @@ export default function SentMessagesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[40px]"></TableHead>
-                    <TableHead className="w-[60px]">Type</TableHead>
+                    <TableHead
+                      className="w-[60px] cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("channel")}
+                    >
+                      <div className="flex items-center">
+                        Type
+                        {getSortIcon("channel")}
+                      </div>
+                    </TableHead>
                     <TableHead className="w-[180px]">Recipient</TableHead>
                     <TableHead>Subject / Preview</TableHead>
-                    <TableHead className="w-[100px]">Status</TableHead>
-                    <TableHead className="w-[120px]">Sent</TableHead>
+                    <TableHead
+                      className="w-[100px] cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("status")}
+                    >
+                      <div className="flex items-center">
+                        Status
+                        {getSortIcon("status")}
+                      </div>
+                    </TableHead>
+                    <TableHead
+                      className="w-[120px] cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleSort("sent_at")}
+                    >
+                      <div className="flex items-center">
+                        Sent
+                        {getSortIcon("sent_at")}
+                      </div>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -392,6 +593,7 @@ export default function SentMessagesPage() {
                     const isExpanded = expandedRowId === message.id;
                     const statusColors = MESSAGE_STATUS_COLORS[message.status];
                     const sourceColors = MESSAGE_SOURCE_COLORS[message.source];
+                    const contactTags = message.contact?.tags || [];
 
                     return (
                       <>
@@ -483,6 +685,32 @@ export default function SentMessagesPage() {
                                       )}
                                     </div>
 
+                                    {/* Contact Tags */}
+                                    {contactTags.length > 0 && (
+                                      <div>
+                                        <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-1">
+                                          <Tag className="w-4 h-4" />
+                                          Tags
+                                        </h4>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {contactTags.map(({ tag }) => (
+                                            <Badge
+                                              key={tag.id}
+                                              variant="secondary"
+                                              style={{
+                                                backgroundColor: `${tag.color}20`,
+                                                color: tag.color,
+                                                borderColor: `${tag.color}40`,
+                                              }}
+                                              className="border text-xs"
+                                            >
+                                              {tag.name}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
                                     {/* Source Badge */}
                                     <div>
                                       <h4 className="text-sm font-semibold text-gray-900 mb-2">
@@ -549,25 +777,42 @@ export default function SentMessagesPage() {
                                     <h4 className="text-sm font-semibold text-gray-900">
                                       Message Content
                                     </h4>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        copyToClipboard(message.body);
-                                      }}
-                                    >
-                                      <Copy className="w-4 h-4 mr-1" />
-                                      Copy
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                      {message.body.length > 500 && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setFullMessageModal(message);
+                                          }}
+                                        >
+                                          <ExternalLink className="w-4 h-4 mr-1" />
+                                          View Full
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          copyToClipboard(message.body);
+                                        }}
+                                      >
+                                        <Copy className="w-4 h-4 mr-1" />
+                                        Copy
+                                      </Button>
+                                    </div>
                                   </div>
                                   {message.channel === "email" && message.subject && (
                                     <p className="font-medium text-gray-900 mb-2">
                                       Subject: {message.subject}
                                     </p>
                                   )}
-                                  <div className="bg-white border rounded-lg p-4 text-sm whitespace-pre-wrap">
-                                    {message.body}
+                                  <div className="bg-white border rounded-lg p-4 text-sm whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+                                    {message.body.length > 500
+                                      ? message.body.slice(0, 500) + "..."
+                                      : message.body}
                                   </div>
                                 </div>
 
@@ -584,6 +829,19 @@ export default function SentMessagesPage() {
                                     >
                                       <User className="w-4 h-4 mr-1" />
                                       View Contact
+                                    </Button>
+                                  )}
+                                  {message.contact && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleResend(message);
+                                      }}
+                                    >
+                                      <RotateCcw className="w-4 h-4 mr-1" />
+                                      Resend
                                     </Button>
                                   )}
                                   <Button
@@ -643,6 +901,66 @@ export default function SentMessagesPage() {
           </div>
         )}
       </div>
+
+      {/* Full Message Modal */}
+      <Dialog open={!!fullMessageModal} onOpenChange={() => setFullMessageModal(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {fullMessageModal?.channel === "sms" ? (
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+              ) : (
+                <Mail className="w-5 h-5 text-purple-600" />
+              )}
+              {fullMessageModal?.channel === "sms" ? "SMS Message" : "Email Message"}
+            </DialogTitle>
+            <DialogDescription>
+              Sent to {fullMessageModal ? getContactDisplayName(fullMessageModal) : ""}
+              {" "}on{" "}
+              {fullMessageModal?.sent_at
+                ? formatTimestamp(fullMessageModal.sent_at)
+                : formatTimestamp(fullMessageModal?.created_at || "")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {fullMessageModal?.channel === "email" && fullMessageModal?.subject && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-1">Subject</h4>
+                <p className="text-sm">{fullMessageModal.subject}</p>
+              </div>
+            )}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-sm font-semibold text-gray-900">Message</h4>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (fullMessageModal) {
+                      copyToClipboard(fullMessageModal.body);
+                    }
+                  }}
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Copy
+                </Button>
+              </div>
+              <div className="bg-muted/30 border rounded-lg p-4 text-sm whitespace-pre-wrap">
+                {fullMessageModal?.body}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+}
+
+// Helper function for short date formatting
+function formatDateShort(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
