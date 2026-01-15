@@ -502,9 +502,17 @@ export default function ContactsPage() {
                   {contacts.map((contact) => (
                     <TableRow
                       key={contact.id}
-                      className={
+                      className={`cursor-pointer hover:bg-gray-50 ${
                         selectedContactIds.has(contact.id) ? "bg-blue-50" : ""
-                      }
+                      }`}
+                      onClick={(e) => {
+                        // Don't navigate if clicking checkbox or dropdown
+                        const target = e.target as HTMLElement;
+                        if (target.closest('button') || target.closest('[role="checkbox"]')) {
+                          return;
+                        }
+                        router.push(`/contacts/${contact.id}`);
+                      }}
                     >
                       <TableCell>
                         <Checkbox

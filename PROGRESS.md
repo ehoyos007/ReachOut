@@ -4,6 +4,39 @@
 
 ---
 
+## January 14, 2026 — Session 13
+
+### Summary
+Debugged Vercel deployment issue - pages showing "setup Supabase" message due to incorrectly named environment variable.
+
+### Completed
+- [x] Diagnosed issue: `isSupabaseConfigured()` returning false on deployed app
+- [x] Identified root cause: `NEXT_PUBLIC_*` variables are inlined at build time, not runtime
+- [x] Connected Vercel CLI to project (`vercel link`)
+- [x] Discovered environment variable mismatch:
+  - Vercel has: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+  - App expects: `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- [x] Fixed local `.env.local` variable name
+- [x] Added click-to-navigate on contact table rows
+
+### Files Changed
+- `.vercel/` — Created: Vercel project link configuration
+- `.env.local` — Fixed: Renamed `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `src/app/contacts/page.tsx` — Added: Row click handler to navigate to contact detail page
+
+### Decisions Made
+- **Fix approach:** Rename environment variable in Vercel to match code expectation (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- **Row click navigation:** Added onClick to TableRow with exclusions for checkbox and dropdown buttons
+
+### Blockers / Issues Encountered
+- **Environment variable naming:** Supabase recently changed naming convention from "anon key" to "publishable key", causing mismatch
+- **Missing row click:** Contact table rows weren't clickable; fixed by adding onClick handler
+
+### Next Steps
+- [ ] Phase 9: Polish (UI improvements, loading states, dashboard)
+
+---
+
 ## January 14, 2026 — Session 12
 
 ### Summary
@@ -699,4 +732,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 12)
+**Last Updated:** January 14, 2026 (Session 13)
