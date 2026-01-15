@@ -4,6 +4,58 @@
 
 ---
 
+## January 15, 2026 — Session 32
+
+### Summary
+Implemented Sent Messages Dashboard Phase 1 - New page for viewing all outbound messages with expandable row details, filtering, and pagination.
+
+### Completed
+- [x] Created detailed feature plan at `plans/PLAN-sent-messages-dashboard.md`
+- [x] Created database migration 011 for `sent_by` column and full-text search index
+- [x] Added `sent_by` field to Message and DbMessage types
+- [x] Added "Sent Messages" link to sidebar navigation with Send icon
+- [x] Created `/messages/sent` page with table view
+- [x] Created `/api/messages/sent` API endpoint with filtering and pagination
+- [x] Added `getSentMessagesWithContact()` helper function to supabase.ts
+- [x] Implemented filter bar with search, type (SMS/Email), and status filters
+- [x] Implemented expandable row details showing:
+  - Contact details (name, email, phone, link to contact page)
+  - Message source badge (Manual/Bulk/Workflow)
+  - Timestamps (created, sent, delivered, failed)
+  - Full message content with copy button
+  - Error message display for failed messages
+- [x] Added pagination with page navigation
+- [x] Implemented loading skeleton and empty states
+- [x] Build passes successfully
+- [x] Committed changes (062aec7)
+
+### Files Changed
+- `supabase/migrations/011_add_sent_by_and_search_vector.sql` — New: Migration for sent_by column and full-text search
+- `src/types/message.ts` — Updated: Added sent_by field to Message and DbMessage interfaces
+- `src/lib/supabase.ts` — Extended: Added getSentMessagesWithContact() function and types
+- `src/components/layout/Sidebar.tsx` — Updated: Added "Sent Messages" nav item with Send icon
+- `src/app/messages/sent/page.tsx` — New: Sent messages dashboard page
+- `src/app/api/messages/sent/route.ts` — New: API endpoint for sent messages
+- `plans/PLAN-sent-messages-dashboard.md` — New: Feature plan with phases and technical design
+- `TASKS.md` — Updated: Added Sent Messages Dashboard feature tracking
+
+### Decisions Made
+- **Unified messages table:** Discovered existing unified `messages` table - no VIEW needed
+- **Application-layer filtering:** Use `direction = 'outbound'` filter at API level
+- **Expandable rows:** Click-to-expand pattern for viewing full message details inline
+- **sent_by column:** Nullable UUID to track who sent message (null = system/automation)
+- **Full-text search:** Generated tsvector column with GIN index for efficient content search
+
+### Blockers / Issues Encountered
+- **Type imports:** Initially referenced MessageChannel/MessageStatus without importing; fixed by adding to existing import statement
+- **createClient export:** Supabase client uses `supabase` export not `createClient`; created helper function instead
+
+### Next Steps
+- [ ] Run migration 011 in Supabase to enable sent_by and search features
+- [ ] Phase 2-6: Date range picker, column sorting, resend action, full message modal, contact tags
+
+---
+
 ## January 15, 2026 — Session 31
 
 ### Summary
@@ -1520,4 +1572,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 15, 2026 (Session 31)
+**Last Updated:** January 15, 2026 (Session 32)
