@@ -4,6 +4,70 @@
 
 ---
 
+## January 14, 2026 — Session 16
+
+### Summary
+Multiple Trigger Types - Extended TriggerStartNode to support 6 different trigger types plus added ReturnToParent node for sub-workflow support.
+
+### Completed
+- [x] Added `TriggerType` enum with 6 trigger types:
+  - `manual` - User clicks "Run" button
+  - `contact_added` - Auto-trigger on contact creation
+  - `tag_added` - Trigger when specific tag(s) applied
+  - `scheduled` - Time-based (one-time or recurring)
+  - `status_changed` - Trigger on status change
+  - `sub_workflow` - Called by parent workflow with data passing
+- [x] Created discriminated union types for type-safe trigger configurations
+- [x] Added `InputVariable` and `OutputVariable` interfaces for sub-workflow data passing
+- [x] Created `formatTriggerConfig()` helper for human-readable config summaries
+- [x] Built comprehensive `TriggerStartPanel` with:
+  - Trigger type selector dropdown
+  - Conditional rendering for type-specific fields
+  - Tag multi-select for "When Tag Added"
+  - Status multi-select for "When Status Is"
+  - Schedule builder for "Scheduled" (daily/weekly/monthly)
+  - Input variable definitions for sub-workflows
+- [x] Updated `TriggerStartNode` with dynamic icons, colors, and sublabel per trigger type
+- [x] Created `ReturnToParentNode` component for ending sub-workflows
+- [x] Created `ReturnToParentPanel` with:
+  - Return status selector (success/failure/custom)
+  - Output variable definitions with name, type, and value expression
+- [x] Added `return_to_parent` to workflow node types and processor registry
+- [x] Registered new panels in `NodeConfigPanel`
+- [x] Added ReturnToParent to NodePalette Actions category
+- [x] Build compiles successfully
+
+### Files Changed
+- `src/types/workflow.ts` — Extended: Added TriggerType, trigger config unions, InputVariable, OutputVariable, ReturnToParentData, formatTriggerConfig()
+- `src/components/workflow/panels/TriggerStartPanel.tsx` — New: Comprehensive trigger configuration panel (500+ lines)
+- `src/components/workflow/nodes/TriggerStartNode.tsx` — Updated: Dynamic icons, colors, sublabel based on trigger type
+- `src/components/workflow/nodes/ReturnToParentNode.tsx` — New: Node component for sub-workflow endings
+- `src/components/workflow/panels/ReturnToParentPanel.tsx` — New: Panel for return status and output variables
+- `src/components/workflow/panels/NodeConfigPanel.tsx` — Updated: Registered TriggerStartPanel and ReturnToParentPanel
+- `src/components/workflow/WorkflowCanvas.tsx` — Updated: Added ReturnToParentNode to nodeTypes and minimap colors
+- `src/components/workflow/NodePalette.tsx` — Updated: Added return_to_parent to Actions category
+- `src/components/workflow/nodes/index.ts` — Updated: Export ReturnToParentNode
+- `src/lib/workflow-executor/node-processors.ts` — Updated: Added returnToParentProcessor
+
+### Decisions Made
+- **Discriminated unions:** Used TypeScript discriminated unions for type-safe trigger configurations
+- **Conditional panels:** Each trigger type shows only relevant configuration fields
+- **Mock tags data:** Used placeholder tags for now (real tags integration is future work)
+- **Terminal node:** ReturnToParent always returns `nextNodeId: null` as it ends the workflow
+- **Backward compatibility:** Existing triggers default to `{ type: "manual" }` configuration
+
+### Blockers / Issues Encountered
+- **Missing processor:** Build failed initially because `return_to_parent` wasn't in nodeProcessors registry; fixed by adding returnToParentProcessor
+- **Interface mismatch:** NodeProcessor interface uses `execute` method, not `process`; fixed by matching interface signature
+
+### Next Steps
+- [ ] Integrate real tags from database into TriggerStartPanel
+- [ ] Implement actual trigger execution logic in workflow engine
+- [ ] Add sub-workflow invocation node ("Call Workflow")
+- [ ] Wire up scheduled trigger to cron system
+
+---
+
 ## January 14, 2026 — Session 15
 
 ### Summary
@@ -824,4 +888,4 @@ Initial project setup and visual workflow builder implementation.
 
 ---
 
-**Last Updated:** January 14, 2026 (Session 14)
+**Last Updated:** January 14, 2026 (Session 16)

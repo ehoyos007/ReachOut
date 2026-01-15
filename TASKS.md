@@ -13,6 +13,48 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ## To Do
 
+### Feature: Bulk Tag Assignment in Import Wizard
+
+**Phase 1: Basic Bulk Tagging (MVP)**
+
+- [ ] **1.1 Add Tag State to Import Wizard**
+  - Add `selectedTagIds` state, fetch tags on mount via store
+  - File: `src/app/contacts/import/page.tsx`
+  - Effort: Small
+
+- [ ] **1.2 Create Tag Selector UI**
+  - Searchable multi-select dropdown with existing tags
+  - Display color indicators and removable badges
+  - File: `src/app/contacts/import/page.tsx`
+  - Effort: Medium
+
+- [ ] **1.3 Add Inline Tag Creation**
+  - "Create new tag" option with name + color picker
+  - Auto-select newly created tag
+  - Effort: Medium
+
+- [ ] **1.4 Update Preview Step**
+  - Show selected tags summary ("Apply X tags to Y contacts")
+  - Allow removing tags before confirmation
+  - Effort: Small
+
+- [ ] **1.5 Modify Import Execution**
+  - Pass `selectedTagIds` to each `createContact()` call
+  - Update completion summary
+  - Effort: Small
+
+- [ ] **1.6 Testing & Polish**
+  - Test scenarios: 0/1/many tags, inline creation, large imports
+  - Verify tags appear on imported contacts
+  - Effort: Medium
+
+**Phase 2: Conditional Tagging (Future)**
+- [ ] Rule builder: "If [column] [operator] [value], apply [tag]"
+- [ ] Evaluate rules per row during import
+- [ ] Preview conditional results
+
+---
+
 ### Backlog (Post-MVP Enhancements)
 *See Ideas / Future Enhancements section below*
 
@@ -195,6 +237,20 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 - [x] Removed duplicate headers (now in sidebar)
 - [x] 132 tests passing
 
+### Multiple Trigger Types (Completed Jan 14, 2026)
+- [x] Extended TriggerStartNode to support 6 trigger types:
+  - Manual (user clicks Run button)
+  - When Contact Added (auto-trigger on creation)
+  - When Tag Added (trigger on specific tags)
+  - Scheduled (one-time or recurring: daily/weekly/monthly)
+  - When Status Is (trigger on status change)
+  - Sub-Workflow (called by parent workflow)
+- [x] Created TriggerStartPanel with type-specific configuration
+- [x] Added ReturnToParentNode for sub-workflow endings
+- [x] Created ReturnToParentPanel for return status and output variables
+- [x] Added discriminated union types for type-safe configs
+- [x] Added InputVariable/OutputVariable for sub-workflow data passing
+
 ---
 
 ## Phase 3: Contact Management - COMPLETE
@@ -249,4 +305,4 @@ All core phases (1-9) are complete. ReachOut is ready for production use.
 
 ---
 
-**Last Updated:** January 14, 2026
+**Last Updated:** January 14, 2026 (Session 16)
